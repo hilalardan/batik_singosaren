@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000";
+const API_URL = "https://batiksingosaren-production.up.railway.app";
 
 export const mediaUrl = (gambar) => {
   if (!gambar) return null;
