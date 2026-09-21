@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate,useLocation,} from "react-router-dom";
+import {
+  NavLink,
+  Outlet,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+
 import { adminApi } from "../api";
 import { mediaUrl, onImgError } from "../utils";
 import { SITE } from "../constants";
@@ -32,9 +38,14 @@ const MENU = [
     icon: "bi-people",
   },
   {
-    to: "/admin/pembelian",
+    to: "/admin/pesanan",
     label: "Pesanan",
     icon: "bi-bag-check",
+  },
+  {
+    to: "/admin/laporan",
+    label: "Laporan Penjualan",
+    icon: "bi-bar-chart-line",
   },
 ];
 
@@ -44,7 +55,8 @@ const TITLES = {
   "/admin/kategori": "Kelola Kategori",
   "/admin/artikel": "Kelola Artikel",
   "/admin/pembeli": "Kelola Pembeli",
-  "/admin/pembelian": "Kelola Pesanan",
+  "/admin/pesanan": "Kelola Pesanan",
+  "/admin/laporan": "Laporan Penjualan",
 };
 
 export default function AdminLayout() {
@@ -54,7 +66,8 @@ export default function AdminLayout() {
   const [adminName, setAdminName] = useState("");
   const [adminFoto, setAdminFoto] = useState("");
 
-  const title = TITLES[location.pathname] || "Panel Admin";
+  const title =
+    TITLES[location.pathname] || "Panel Admin";
 
   // Ambil profil admin
   useEffect(() => {
@@ -65,13 +78,20 @@ export default function AdminLayout() {
 
         const p = res.data;
 
-        const nama = `${p.nama_d || ""} ${p.nama_b || ""}`.trim();
+        const nama =
+          `${p.nama_d || ""} ${p.nama_b || ""}`.trim();
 
-        setAdminName(nama || p.uname || "Admin");
+        setAdminName(
+          nama || p.uname || "Admin"
+        );
+
         setAdminFoto(p.foto || "");
       })
       .catch((err) => {
-        console.error("Gagal mengambil profil admin:", err);
+        console.error(
+          "Gagal mengambil profil admin:",
+          err
+        );
       });
   }, []);
 
@@ -88,6 +108,7 @@ export default function AdminLayout() {
 
         {/* Brand */}
         <div className="adm-sidebar-brand">
+
           <div className="adm-sidebar-brand-icon">
             <i className="bi bi-shop"></i>
           </div>
@@ -101,10 +122,12 @@ export default function AdminLayout() {
               Admin Panel
             </div>
           </div>
+
         </div>
 
         {/* Menu */}
         <nav className="adm-nav">
+
           {MENU.map((item) => (
             <NavLink
               key={item.to}
@@ -112,20 +135,29 @@ export default function AdminLayout() {
               end={item.end}
               className={({ isActive }) =>
                 `adm-nav-item ${
-                  isActive ? "adm-nav-item--active" : ""
+                  isActive
+                    ? "adm-nav-item--active"
+                    : ""
                 }`
               }
             >
               <i className={`bi ${item.icon}`}></i>
-              <span>{item.label}</span>
+
+              <span>
+                {item.label}
+              </span>
             </NavLink>
           ))}
+
         </nav>
 
         {/* Footer Sidebar */}
         <div className="adm-sidebar-footer">
 
-          <NavLink to="/" className="adm-link-muted">
+          <NavLink
+            to="/"
+            className="adm-link-muted"
+          >
             <i className="bi bi-house"></i>
             Lihat website
           </NavLink>
@@ -140,6 +172,7 @@ export default function AdminLayout() {
           </button>
 
         </div>
+
       </aside>
 
       {/* MAIN */}
@@ -169,6 +202,7 @@ export default function AdminLayout() {
             </span>
 
           </div>
+
         </header>
 
         {/* Content */}
@@ -177,6 +211,7 @@ export default function AdminLayout() {
         </main>
 
       </div>
+
     </div>
   );
 }
