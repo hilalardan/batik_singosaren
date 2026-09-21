@@ -1,5 +1,4 @@
-
-// backend/server.js
+// server.js
 require("dotenv").config();
 
 const express = require("express");
@@ -34,11 +33,26 @@ app.get("/cek-jwt", (req, res) => {
   });
 });
 
+// ================================
+// DEBUG REQUEST
+// ================================
+app.use((req, res, next) => {
+  console.log(
+    "REQUEST:",
+    req.method,
+    req.path,
+    "AUTH:",
+    req.headers.authorization ? "ADA" : "TIDAK ADA"
+  );
+
+  next();
+});
+
 app.use("/api/users", usersRoutes);
 app.use("/api/admin", adminRoutes);
 
 // ================================
-// KATEGORI UNTUK HALAMAN TOKO/HOME
+// KATEGORI
 // ================================
 app.get("/api/kategori", (req, res) => {
   kategoriModel.findAllKategori((err, rows) => {
@@ -60,7 +74,7 @@ app.get("/api/kategori", (req, res) => {
 });
 
 // ================================
-// PRODUK UNTUK HALAMAN TOKO
+// PRODUK
 // ================================
 app.get("/api/produk", async (req, res) => {
   try {
@@ -111,7 +125,7 @@ app.get("/api/produk/:id", async (req, res) => {
 });
 
 // ================================
-// ARTIKEL UNTUK HALAMAN ARTIKEL
+// ARTIKEL
 // ================================
 app.get("/api/artikel", async (req, res) => {
   try {
@@ -161,6 +175,9 @@ app.get("/api/artikel/:id", async (req, res) => {
   }
 });
 
+// ================================
+// SERVER
+// ================================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
