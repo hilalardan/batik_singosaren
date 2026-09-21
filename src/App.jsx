@@ -46,13 +46,14 @@ function App() {
           <Route path="/user/pesanan" element={<Pesanan />} />
         </Route>
 
+      
         {/* ADMIN */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminOverviewPage />} />
           <Route path="produk" element={<AdminProduk />} />
           <Route path="artikel" element={<AdminArtikel />} />
           <Route path="pembeli" element={<AdminPembeli />} />
-          <Route path="pembelian" element={<AdminPembelian />} />
+          <Route path="pesanan" element={<AdminPembelian />} />
           <Route path="kategori" element={<AdminKategori />} />
         </Route>
 
