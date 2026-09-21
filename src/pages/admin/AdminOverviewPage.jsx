@@ -21,10 +21,39 @@ export default function AdminOverviewPage() {
       adminApi.getProduk(),
     ])
       .then(([resStats, resPembeli, resProduk]) => {
-        setStats(resStats.data.stats);
-        setRecent(resStats.data.recent || []);
-        setJumlahPembeli((resPembeli.data || []).length);
-        setJumlahProduk((resProduk.data || []).length);
+        // Cek response statistik terlebih dahulu
+        if (!resStats?.success) {
+          throw new Error(
+            resStats?.message || "Gagal mengambil statistik"
+          );
+        }
+
+        // Cek response pembeli
+        if (!resPembeli?.success) {
+          throw new Error(
+            resPembeli?.message || "Gagal mengambil data pembeli"
+          );
+        }
+
+        // Cek response produk
+        if (!resProduk?.success) {
+          throw new Error(
+            resProduk?.message || "Gagal mengambil data produk"
+          );
+        }
+
+        setStats(resStats.data?.stats || {});
+        setRecent(resStats.data?.recent || []);
+        setJumlahPembeli(
+          Array.isArray(resPembeli.data)
+            ? resPembeli.data.length
+            : 0
+        );
+        setJumlahProduk(
+          Array.isArray(resProduk.data)
+            ? resProduk.data.length
+            : 0
+        );
       })
       .catch((err) => {
         if (!handleError(err)) {
@@ -48,6 +77,7 @@ export default function AdminOverviewPage() {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-secondary mb-3"></div>
+
         <p className="text-muted mb-0">
           Memuat data dashboard...
         </p>
@@ -73,7 +103,7 @@ export default function AdminOverviewPage() {
     },
     {
       label: "Total Transaksi",
-      value: stats.total_pembelian,
+      value: stats.total_pembelian || 0,
       icon: "bi-receipt",
       warna: "dark",
     },
@@ -85,7 +115,7 @@ export default function AdminOverviewPage() {
     },
     {
       label: "Produk Terjual",
-      value: stats.total_pembelian,
+      value: stats.total_pembelian || 0,
       icon: "bi-bag-check",
       warna: "",
     },
@@ -152,7 +182,6 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-
       {/* KARTU STATISTIK */}
       <div className="row g-3 mb-4">
         {kartu.map((k) => (
@@ -199,7 +228,6 @@ export default function AdminOverviewPage() {
         ))}
       </div>
 
-
       {/* PENDAPATAN */}
       <div className="adm-card mb-4">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -231,12 +259,11 @@ export default function AdminOverviewPage() {
           </div>
 
           <div className="adm-pendapatan-value">
-            {formatRupiah(stats.total_pendapatan)}
+            {formatRupiah(stats.total_pendapatan || 0)}
           </div>
 
         </div>
       </div>
-
 
       {/* STATUS PESANAN */}
       <div className="adm-card mb-4">
@@ -261,7 +288,6 @@ export default function AdminOverviewPage() {
           </Link>
 
         </div>
-
 
         <div className="row g-3">
 
@@ -303,7 +329,6 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-
       {/* TRANSAKSI TERBARU */}
       <div className="adm-card mb-4">
 
@@ -328,7 +353,6 @@ export default function AdminOverviewPage() {
           </Link>
 
         </div>
-
 
         {recent.length === 0 ? (
 
@@ -424,7 +448,6 @@ export default function AdminOverviewPage() {
         )}
 
       </div>
-
 
       {/* AKSI CEPAT */}
       <div>
