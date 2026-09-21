@@ -1,5 +1,4 @@
 // backend/controllers/adminController.js
-
 const bcrypt = require("bcrypt");
 const db = require("../config/db");
 
@@ -8,6 +7,10 @@ const usersModel = require("../models/usersModel");
 const artikelModel = require("../models/artikelModel");
 const pembelianModel = require("../models/pembelianModel");
 const kategoriModel = require("../models/kategoriModel");
+
+// ========================================
+// PRODUK
+// ========================================
 
 const listProduk = async (req, res) => {
   try {
@@ -167,9 +170,9 @@ const deleteProduk = async (req, res) => {
 };
 
 
-// =========================
+// ========================================
 // KATEGORI
-// =========================
+// ========================================
 
 const listKategori = (req, res) => {
   kategoriModel.findAllKategori((err, data) => {
@@ -346,7 +349,8 @@ const updateKategori = (req, res) => {
                   if (err) {
                     return res.json({
                       success: false,
-                      message: "Kategori berhasil diubah, tetapi kategori produk gagal diperbarui",
+                      message:
+                        "Kategori berhasil diubah, tetapi kategori produk gagal diperbarui",
                       error: err.message
                     });
                   }
@@ -403,7 +407,8 @@ const deleteKategori = (req, res) => {
           if (hasil[0].jumlah > 0) {
             return res.json({
               success: false,
-              message: "Kategori tidak bisa dihapus karena masih digunakan oleh produk"
+              message:
+                "Kategori tidak bisa dihapus karena masih digunakan oleh produk"
             });
           }
 
@@ -438,9 +443,9 @@ const deleteKategori = (req, res) => {
 };
 
 
-// =========================
+// ========================================
 // PEMBELI
-// =========================
+// ========================================
 
 const listPembeli = async (req, res) => {
   try {
@@ -542,9 +547,9 @@ const deletePembeli = async (req, res) => {
 };
 
 
-// =========================
+// ========================================
 // ARTIKEL
-// =========================
+// ========================================
 
 const listArtikel = async (req, res) => {
   try {
@@ -649,9 +654,9 @@ const deleteArtikel = async (req, res) => {
 };
 
 
-// =========================
+// ========================================
 // STATISTIK
-// =========================
+// ========================================
 
 const getStats = async (req, res) => {
   try {
@@ -675,9 +680,31 @@ const getStats = async (req, res) => {
 };
 
 
-// =========================
+// ========================================
+// LAPORAN PENJUALAN
+// ========================================
+
+const getLaporanPenjualan = async (req, res) => {
+  try {
+    const data = await pembelianModel.getLaporanPenjualan();
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      message: "Gagal mengambil laporan penjualan",
+      error: err.message
+    });
+  }
+};
+
+
+// ========================================
 // PEMBELIAN
-// =========================
+// ========================================
 
 const listPembelian = async (req, res) => {
   try {
@@ -764,9 +791,9 @@ const deletePembelian = async (req, res) => {
 };
 
 
-// =========================
+// ========================================
 // PROFILE
-// =========================
+// ========================================
 
 const getMyProfile = async (req, res) => {
   try {
@@ -806,7 +833,8 @@ const updateMyProfile = async (req, res) => {
       if (!passwd_lama) {
         return res.json({
           success: false,
-          message: "Password lama wajib diisi untuk ganti password"
+          message:
+            "Password lama wajib diisi untuk ganti password"
         });
       }
 
@@ -850,9 +878,9 @@ const updateMyProfile = async (req, res) => {
 };
 
 
-// =========================
+// ========================================
 // USERS
-// =========================
+// ========================================
 
 const getUsers = async (req, res) => {
   try {
@@ -957,6 +985,11 @@ const deleteUserAdmin = async (req, res) => {
   }
 };
 
+
+// ========================================
+// EXPORT
+// ========================================
+
 module.exports = {
   listProduk,
   getProdukById,
@@ -983,6 +1016,7 @@ module.exports = {
   deleteArtikel,
 
   getStats,
+  getLaporanPenjualan,
 
   listPembelian,
   getPembelianById,
