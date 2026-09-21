@@ -28,7 +28,7 @@ function LoginPage() {
 
     try {
       const response = await fetch(
-        "https://batiksingosaren-production.up.railway.app";
+        "https://batiksingosaren-production.up.railway.app/api/users/login",
         {
           method: "POST",
           headers: {
