@@ -1,4 +1,5 @@
 // backend/server.js
+
 require("dotenv").config();
 
 const express = require("express");
@@ -20,12 +21,40 @@ app.get("/", (req, res) => {
   res.send("API Batik Ponorogo jalan");
 });
 
+
+// ================================
+// CEK JWT SECRET SEMENTARA
+// ================================
+
+app.get("/cek-jwt", (req, res) => {
+  const secret = process.env.JWT_SECRET || "";
+
+  res.json({
+    success: true,
+    jwt_secret_tersedia: secret.length > 0,
+    jwt_secret_panjang: secret.length
+  });
+});
+
+
+// ================================
+// ROUTE USERS
+// ================================
+
 app.use("/api/users", usersRoutes);
+
+
+// ================================
+// ROUTE ADMIN
+// ================================
+
 app.use("/api/admin", adminRoutes);
+
 
 // ================================
 // KATEGORI UNTUK HALAMAN TOKO/HOME
 // ================================
+
 app.get("/api/kategori", (req, res) => {
   kategoriModel.findAllKategori((err, rows) => {
     if (err) {
@@ -45,9 +74,11 @@ app.get("/api/kategori", (req, res) => {
   });
 });
 
+
 // ================================
 // PRODUK UNTUK HALAMAN TOKO
 // ================================
+
 app.get("/api/produk", async (req, res) => {
   try {
     const data = await produkModel.findAllProduk();
@@ -67,9 +98,11 @@ app.get("/api/produk", async (req, res) => {
   }
 });
 
+
 // ================================
 // DETAIL PRODUK
 // ================================
+
 app.get("/api/produk/:id", async (req, res) => {
   try {
     const data = await produkModel.findProdukById(req.params.id);
@@ -96,9 +129,11 @@ app.get("/api/produk/:id", async (req, res) => {
   }
 });
 
+
 // ================================
 // ARTIKEL UNTUK HALAMAN ARTIKEL
 // ================================
+
 app.get("/api/artikel", async (req, res) => {
   try {
     const data = await artikelModel.findAllArtikel();
@@ -118,9 +153,11 @@ app.get("/api/artikel", async (req, res) => {
   }
 });
 
+
 // ================================
 // DETAIL ARTIKEL
 // ================================
+
 app.get("/api/artikel/:id", async (req, res) => {
   try {
     const data = await artikelModel.findArtikelById(req.params.id);
@@ -146,6 +183,11 @@ app.get("/api/artikel/:id", async (req, res) => {
     });
   }
 });
+
+
+// ================================
+// SERVER
+// ================================
 
 const PORT = process.env.PORT || 5000;
 
