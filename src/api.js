@@ -1,334 +1,339 @@
 export const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  "https://batiksingosaren-production.up.railway.app";
+import.meta.env.VITE_API_URL ||
+"https://batiksingosaren-production.up.railway.app";
 
 export function authHeaders() {
-  const token = localStorage.getItem("toko_token");
+const token = localStorage.getItem("toko_token");
 
-  return token
-    ? { Authorization: `Bearer ${token}` }
-    : {};
+return token
+? { Authorization: `Bearer ${token}` }
+: {};
 }
 
 export async function apiRequest(path, options = {}) {
-  const url = path.startsWith("http")
-    ? path
-    : `${API_BASE}${path}`;
+const url = path.startsWith("http")
+? path
+: `${API_BASE}${path}`;
 
-  const headers = {
-    "Content-Type": "application/json",
-    ...authHeaders(),
-    ...options.headers,
-  };
+const headers = {
+"Content-Type": "application/json",
+...authHeaders(),
+...options.headers,
+};
 
-  let res;
+let res;
 
-  try {
-    res = await fetch(url, {
-      ...options,
-      headers,
-    });
-  } catch {
-    throw new Error(
-      "Backend tidak jalan. Jalankan backend di port 5000."
-    );
-  }
+try {
+res = await fetch(url, {
+...options,
+headers,
+});
+} catch {
+throw new Error(
+"Backend tidak jalan. Jalankan backend di port 5000."
+);
+}
 
-  const body = await res.json().catch(() => ({}));
+const body = await res.json().catch(() => ({}));
 
-  if (!res.ok) {
-    const err = new Error(
-      body.message || "Permintaan gagal"
-    );
+if (!res.ok) {
+const err = new Error(
+body.message || "Permintaan gagal"
+);
 
-    err.status = res.status;
-    err.body = body;
+```
+err.status = res.status;
+err.body = body;
 
-    throw err;
-  }
+throw err;
+```
 
-  return body;
+}
+
+return body;
 }
 
 async function uploadGambar(endpoint, file) {
-  const fd = new FormData();
-  fd.append("gambar", file);
+const fd = new FormData();
+fd.append("gambar", file);
 
-  let res;
+let res;
 
-  try {
-    res = await fetch(`${API_BASE}${endpoint}`, {
-      method: "POST",
-      headers: authHeaders(),
-      body: fd,
-    });
-  } catch {
-    throw new Error(
-      "Backend tidak jalan. Jalankan backend di port 5000."
-    );
-  }
-
-  const body = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    const err = new Error(
-      body.message || "Upload gagal"
-    );
-
-    err.status = res.status;
-    throw err;
-  }
-
-  return body;
+try {
+res = await fetch(`${API_BASE}${endpoint}`, {
+method: "POST",
+headers: authHeaders(),
+body: fd,
+});
+} catch {
+throw new Error(
+"Backend tidak jalan. Jalankan backend di port 5000."
+);
 }
 
+const body = await res.json().catch(() => ({}));
+
+if (!res.ok) {
+const err = new Error(
+body.message || "Upload gagal"
+);
+
+```
+err.status = res.status;
+throw err;
+```
+
+}
+
+return body;
+}
 
 /* =========================
-   API PUBLIK + LOGIN
+API PUBLIK + LOGIN
 ========================= */
 
 export const api = {
-  // Produk publik
-  getProduk: () =>
-    apiRequest("/api/produk"),
+// Produk publik
+getProduk: () =>
+apiRequest("/api/produk"),
 
-  getProdukById: (id) =>
-    apiRequest(`/api/produk/${id}`),
+getProdukById: (id) =>
+apiRequest(`/api/produk/${id}`),
 
-  // Kategori publik
-  getKategori: () =>
-    apiRequest("/api/kategori"),
+// Kategori publik
+getKategori: () =>
+apiRequest("/api/kategori"),
 
-  // Artikel publik
-  getArtikel: () =>
-    apiRequest("/api/artikel"),
+// Artikel publik
+getArtikel: () =>
+apiRequest("/api/artikel"),
 
-  getArtikelById: (id) =>
-    apiRequest(`/api/artikel/${id}`),
+getArtikelById: (id) =>
+apiRequest(`/api/artikel/${id}`),
 
-  // Login
-  login: (credential, passwd) =>
-    apiRequest("/api/users/login", {
-      method: "POST",
-      body: JSON.stringify({
-        credential,
-        passwd,
-      }),
-    }),
+// Login
+login: (credential, passwd) =>
+apiRequest("/api/users/login", {
+method: "POST",
+body: JSON.stringify({
+credential,
+passwd,
+}),
+}),
 
-  // Register
-  register: (payload) =>
-    apiRequest("/api/users/register", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+// Register
+register: (payload) =>
+apiRequest("/api/users/register", {
+method: "POST",
+body: JSON.stringify(payload),
+}),
 
-  // Profile pembeli
-  getPembeliMe: () =>
-    apiRequest("/api/users/me"),
+// Profile pembeli
+getPembeliMe: () =>
+apiRequest("/api/users/me"),
 
-  // Profile admin
-  getAdminMe: () =>
-    apiRequest("/api/admin/me"),
+// Profile admin
+getAdminMe: () =>
+apiRequest("/api/admin/me"),
 };
 
-
 /* =========================
-   API ADMIN
+API ADMIN
 ========================= */
 
 export const adminApi = {
-  getStats: () =>
-    apiRequest("/api/admin/stats"),
+getStats: () =>
+apiRequest("/api/admin/stats"),
 
-  getMe: () =>
-    apiRequest("/api/admin/me"),
+getMe: () =>
+apiRequest("/api/admin/me"),
 
-  putMe: (payload) =>
-    apiRequest("/api/admin/me", {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
+putMe: (payload) =>
+apiRequest("/api/admin/me", {
+method: "PUT",
+body: JSON.stringify(payload),
+}),
 
-  getPembeli: () =>
-    apiRequest("/api/admin/pembeli"),
+getPembeli: () =>
+apiRequest("/api/admin/pembeli"),
 
-  getUsers: (role) =>
-    apiRequest(
-      `/api/admin/users${role ? `?role=${role}` : ""}`
-    ),
+getUsers: (role) =>
+apiRequest(
+`/api/admin/users${role ? `?role=${role}` : ""}`
+),
 
-  getUser: (id) =>
-    apiRequest(`/api/admin/users/${id}`),
+getUser: (id) =>
+apiRequest(`/api/admin/users/${id}`),
 
-  createUser: (payload) =>
-    apiRequest("/api/admin/users", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+createUser: (payload) =>
+apiRequest("/api/admin/users", {
+method: "POST",
+body: JSON.stringify(payload),
+}),
 
-  updateUser: (id, payload) =>
-    apiRequest(`/api/admin/users/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
+updateUser: (id, payload) =>
+apiRequest(`/api/admin/users/${id}`, {
+method: "PUT",
+body: JSON.stringify(payload),
+}),
 
-  deleteUser: (id) =>
-    apiRequest(`/api/admin/users/${id}`, {
-      method: "DELETE",
-    }),
+deleteUser: (id) =>
+apiRequest(`/api/admin/users/${id}`, {
+method: "DELETE",
+}),
 
+// =========================
+// PRODUK ADMIN
+// =========================
 
-  // =========================
-  // PRODUK ADMIN
-  // =========================
+getProduk: () =>
+apiRequest("/api/admin/produk"),
 
-  getProduk: () =>
-    apiRequest("/api/admin/produk"),
+getProdukById: (id) =>
+apiRequest(`/api/admin/produk/${id}`),
 
-  getProdukById: (id) =>
-    apiRequest(`/api/admin/produk/${id}`),
+createProduk: (payload) =>
+apiRequest("/api/admin/produk", {
+method: "POST",
+body: JSON.stringify(payload),
+}),
 
-  createProduk: (payload) =>
-    apiRequest("/api/admin/produk", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+updateProduk: (id, payload) =>
+apiRequest(`/api/admin/produk/${id}`, {
+method: "PUT",
+body: JSON.stringify(payload),
+}),
 
-  updateProduk: (id, payload) =>
-    apiRequest(`/api/admin/produk/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
+deleteProduk: (id) =>
+apiRequest(`/api/admin/produk/${id}`, {
+method: "DELETE",
+}),
 
-  deleteProduk: (id) =>
-    apiRequest(`/api/admin/produk/${id}`, {
-      method: "DELETE",
-    }),
+// =========================
+// ARTIKEL ADMIN
+// =========================
 
+getArtikel: () =>
+apiRequest("/api/admin/artikel"),
 
-  // =========================
-  // ARTIKEL ADMIN
-  // =========================
+getArtikelById: (id) =>
+apiRequest(`/api/admin/artikel/${id}`),
 
-  getArtikel: () =>
-    apiRequest("/api/admin/artikel"),
+createArtikel: (payload) =>
+apiRequest("/api/admin/artikel", {
+method: "POST",
+body: JSON.stringify(payload),
+}),
 
-  getArtikelById: (id) =>
-    apiRequest(`/api/admin/artikel/${id}`),
+updateArtikel: (id, payload) =>
+apiRequest(`/api/admin/artikel/${id}`, {
+method: "PUT",
+body: JSON.stringify(payload),
+}),
 
-  createArtikel: (payload) =>
-    apiRequest("/api/admin/artikel", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+deleteArtikel: (id) =>
+apiRequest(`/api/admin/artikel/${id}`, {
+method: "DELETE",
+}),
 
-  updateArtikel: (id, payload) =>
-    apiRequest(`/api/admin/artikel/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
+// =========================
+// PEMBELIAN ADMIN
+// =========================
 
-  deleteArtikel: (id) =>
-    apiRequest(`/api/admin/artikel/${id}`, {
-      method: "DELETE",
-    }),
+getPembelian: () =>
+apiRequest("/api/admin/pembelian"),
 
+getPembelianById: (id) =>
+apiRequest(`/api/admin/pembelian/${id}`),
 
-  // =========================
-  // PEMBELIAN ADMIN
-  // =========================
+updatePembelian: (id, payload) =>
+apiRequest(`/api/admin/pembelian/${id}`, {
+method: "PUT",
+body: JSON.stringify(payload),
+}),
 
-  getPembelian: () =>
-    apiRequest("/api/admin/pembelian"),
+deletePembelian: (id) =>
+apiRequest(`/api/admin/pembelian/${id}`, {
+method: "DELETE",
+}),
 
-  getPembelianById: (id) =>
-    apiRequest(`/api/admin/pembelian/${id}`),
+// =========================
+// LAPORAN PENJUALAN ADMIN
+// =========================
 
-  updatePembelian: (id, payload) =>
-    apiRequest(`/api/admin/pembelian/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
+getLaporanPenjualan: () =>
+apiRequest("/api/admin/laporan-penjualan"),
 
-  deletePembelian: (id) =>
-    apiRequest(`/api/admin/pembelian/${id}`, {
-      method: "DELETE",
-    }),
+// =========================
+// KATEGORI ADMIN
+// =========================
 
+getKategori: () =>
+apiRequest("/api/admin/kategori"),
 
-  // =========================
-  // KATEGORI ADMIN
-  // =========================
+getKategoriById: (id) =>
+apiRequest(`/api/admin/kategori/${id}`),
 
-  getKategori: () =>
-    apiRequest("/api/admin/kategori"),
+createKategori: (payload) =>
+apiRequest("/api/admin/kategori", {
+method: "POST",
+body: JSON.stringify(payload),
+}),
 
-  getKategoriById: (id) =>
-    apiRequest(`/api/admin/kategori/${id}`),
+updateKategori: (id, payload) =>
+apiRequest(`/api/admin/kategori/${id}`, {
+method: "PUT",
+body: JSON.stringify(payload),
+}),
 
-  createKategori: (payload) =>
-    apiRequest("/api/admin/kategori", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+deleteKategori: (id) =>
+apiRequest(`/api/admin/kategori/${id}`, {
+method: "DELETE",
+}),
 
-  updateKategori: (id, payload) =>
-    apiRequest(`/api/admin/kategori/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
+// =========================
+// UPLOAD GAMBAR
+// =========================
 
-  deleteKategori: (id) =>
-    apiRequest(`/api/admin/kategori/${id}`, {
-      method: "DELETE",
-    }),
-
-
-  // =========================
-  // UPLOAD GAMBAR
-  // =========================
-
-  uploadGambar: (file) =>
-    uploadGambar("/api/admin/upload-gambar", file),
+uploadGambar: (file) =>
+uploadGambar("/api/admin/upload-gambar", file),
 };
 
-
 /* =========================
-   API PEMBELI
+API PEMBELI
 ========================= */
 
 export const pembeliApi = {
-  getDashboard: () =>
-    apiRequest("/api/users/dashboard"),
+getDashboard: () =>
+apiRequest("/api/users/dashboard"),
 
-  getMe: () =>
-    apiRequest("/api/users/me"),
+getMe: () =>
+apiRequest("/api/users/me"),
 
-  putMe: (payload) =>
-    apiRequest("/api/users/me", {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
+putMe: (payload) =>
+apiRequest("/api/users/me", {
+method: "PUT",
+body: JSON.stringify(payload),
+}),
 
-  getProduk: () =>
-    apiRequest("/api/produk"),
+getProduk: () =>
+apiRequest("/api/produk"),
 
-  getProdukById: (id) =>
-    apiRequest(`/api/produk/${id}`),
+getProdukById: (id) =>
+apiRequest(`/api/produk/${id}`),
 
-  getPembelian: () =>
-    apiRequest("/api/users/pembelian"),
+getPembelian: () =>
+apiRequest("/api/users/pembelian"),
 
-  getPembelianById: (id) =>
-    apiRequest(`/api/users/pembelian/${id}`),
+getPembelianById: (id) =>
+apiRequest(`/api/users/pembelian/${id}`),
 
-  createPembelian: (payload) =>
-    apiRequest("/api/users/pembelian", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+createPembelian: (payload) =>
+apiRequest("/api/users/pembelian", {
+method: "POST",
+body: JSON.stringify(payload),
+}),
 
-  uploadGambar: (file) =>
-    uploadGambar("/api/users/upload-gambar", file),
+uploadGambar: (file) =>
+uploadGambar("/api/users/upload-gambar", file),
 };
