@@ -1,3 +1,4 @@
+
 // backend/server.js
 require("dotenv").config();
 
@@ -18,6 +19,19 @@ app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {
   res.send("API Batik Ponorogo jalan");
+});
+
+// ================================
+// CEK JWT SECRET
+// ================================
+app.get("/cek-jwt", (req, res) => {
+  const secret = process.env.JWT_SECRET || "";
+
+  res.json({
+    success: true,
+    jwt_secret_tersedia: secret.length > 0,
+    jwt_secret_panjang: secret.length,
+  });
 });
 
 app.use("/api/users", usersRoutes);
