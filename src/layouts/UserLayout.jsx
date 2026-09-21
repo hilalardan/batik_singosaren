@@ -1,4 +1,10 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import { SITE } from "../constants";
 import Header from "../components/Header";
 import Footer from "./Footer";
@@ -7,17 +13,14 @@ export default function UserLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isUserArea = location.pathname.startsWith("/user");
+  const isUserArea =
+    location.pathname.startsWith("/user");
 
   function handleLogout() {
     localStorage.removeItem("toko_token");
     navigate("/login");
   }
 
-  // =========================
-  // HALAMAN PEMBELI
-  // TANPA HEADER & FOOTER
-  // =========================
   if (isUserArea) {
     return (
       <div className="user-area">
@@ -25,7 +28,9 @@ export default function UserLayout() {
         {/* SIDEBAR */}
         <aside className="user-sidebar">
 
+          {/* BRAND */}
           <div className="user-brand">
+
             <img
               src={SITE.logo_toko}
               alt={SITE.nama_toko}
@@ -33,17 +38,24 @@ export default function UserLayout() {
 
             <div>
               <h5>{SITE.nama_toko}</h5>
-              <small>Halaman Pembeli</small>
+
+              <small>
+                Halaman Pembeli
+              </small>
             </div>
+
           </div>
 
+          {/* MENU */}
           <nav className="user-menu">
 
             <NavLink
               to="/user"
               end
               className={({ isActive }) =>
-                `user-menu-item ${isActive ? "active" : ""}`
+                `user-menu-item ${
+                  isActive ? "active" : ""
+                }`
               }
             >
               <i className="bi bi-grid"></i>
@@ -53,7 +65,9 @@ export default function UserLayout() {
             <NavLink
               to="/user/toko"
               className={({ isActive }) =>
-                `user-menu-item ${isActive ? "active" : ""}`
+                `user-menu-item ${
+                  isActive ? "active" : ""
+                }`
               }
             >
               <i className="bi bi-shop"></i>
@@ -63,7 +77,9 @@ export default function UserLayout() {
             <NavLink
               to="/user/cart"
               className={({ isActive }) =>
-                `user-menu-item ${isActive ? "active" : ""}`
+                `user-menu-item ${
+                  isActive ? "active" : ""
+                }`
               }
             >
               <i className="bi bi-cart3"></i>
@@ -73,7 +89,9 @@ export default function UserLayout() {
             <NavLink
               to="/user/pesanan"
               className={({ isActive }) =>
-                `user-menu-item ${isActive ? "active" : ""}`
+                `user-menu-item ${
+                  isActive ? "active" : ""
+                }`
               }
             >
               <i className="bi bi-bag-check"></i>
@@ -82,6 +100,7 @@ export default function UserLayout() {
 
           </nav>
 
+          {/* SIDEBAR BOTTOM */}
           <div className="user-sidebar-bottom">
 
             <NavLink
@@ -89,7 +108,10 @@ export default function UserLayout() {
               className="user-menu-item"
             >
               <i className="bi bi-house"></i>
-              <span>Kembali ke Website</span>
+
+              <span>
+                Kembali ke Website
+              </span>
             </NavLink>
 
             <button
@@ -98,7 +120,10 @@ export default function UserLayout() {
               onClick={handleLogout}
             >
               <i className="bi bi-box-arrow-right"></i>
-              <span>Keluar</span>
+
+              <span>
+                Keluar
+              </span>
             </button>
 
           </div>
@@ -108,6 +133,7 @@ export default function UserLayout() {
         {/* KONTEN PEMBELI */}
         <div className="user-main">
 
+          {/* TOPBAR */}
           <div className="user-topbar">
 
             <div>
@@ -126,6 +152,7 @@ export default function UserLayout() {
 
           </div>
 
+          {/* CONTENT */}
           <main className="user-content">
             <Outlet />
           </main>
@@ -135,6 +162,29 @@ export default function UserLayout() {
       </div>
     );
   }
+
+  // =========================
+  // LOGIN & REGISTER
+  // TANPA FOOTER
+  // =========================
+  const isAuthPage =
+    location.pathname === "/login" ||
+    location.pathname === "/register";
+
+  if (isAuthPage) {
+    return (
+      <>
+        <Header />
+
+        <Outlet />
+      </>
+    );
+  }
+
+  // =========================
+  // WEBSITE UTAMA
+  // DENGAN FOOTER
+  // =========================
   return (
     <>
       <Header />
