@@ -21,6 +21,7 @@ import AdminPembeli from "./pages/admin/AdminPembeli";
 import AdminArtikel from "./pages/admin/AdminArtikel";
 import AdminKategori from "./pages/admin/AdminKategori";
 import AdminLaporan from "./pages/admin/AdminLaporan";
+import AdminPesanan from "./pages/admin/AdminPesanan";
 
 import "./App.css";
 
@@ -121,9 +122,10 @@ function App() {
             element={<AdminPembeli />}
           />
 
+          {/* KELOLA PESANAN */}
           <Route
             path="pesanan"
-            element={<AdminPembelian />}
+            element={<AdminPesanan />}
           />
 
           <Route
@@ -131,6 +133,7 @@ function App() {
             element={<AdminKategori />}
           />
 
+          {/* LAPORAN PENJUALAN */}
           <Route
             path="laporan"
             element={<AdminLaporan />}
