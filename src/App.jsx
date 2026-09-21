@@ -20,6 +20,7 @@ import AdminPembelian from "./pages/admin/AdminPembelian";
 import AdminPembeli from "./pages/admin/AdminPembeli";
 import AdminArtikel from "./pages/admin/AdminArtikel";
 import AdminKategori from "./pages/admin/AdminKategori";
+import AdminLaporan from "./pages/admin/AdminLaporan";
 
 import "./App.css";
 
@@ -30,31 +31,111 @@ function App() {
 
         {/* WEBSITE / USER */}
         <Route element={<UserLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/toko" element={<Toko />} />
-          <Route path="/artikel" element={<Artikel />} />
-          <Route path="/artikel/:id" element={<DetailArtikel />} />
-          <Route path="/produk/:id" element={<DetailProduk />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+
+          <Route
+            path="/"
+            element={<Home />}
+          />
+
+          <Route
+            path="/toko"
+            element={<Toko />}
+          />
+
+          <Route
+            path="/artikel"
+            element={<Artikel />}
+          />
+
+          <Route
+            path="/artikel/:id"
+            element={<DetailArtikel />}
+          />
+
+          <Route
+            path="/produk/:id"
+            element={<DetailProduk />}
+          />
+
+          <Route
+            path="/cart"
+            element={<Cart />}
+          />
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/register"
+            element={<Register />}
+          />
 
           {/* USER DASHBOARD */}
-          <Route path="/user" element={<UserDashboard />} />
-          <Route path="/user/toko" element={<Toko />} />
-          <Route path="/user/cart" element={<Cart />} />
-          <Route path="/user/pesanan" element={<Pesanan />} />
+          <Route
+            path="/user"
+            element={<UserDashboard />}
+          />
+
+          <Route
+            path="/user/toko"
+            element={<Toko />}
+          />
+
+          <Route
+            path="/user/cart"
+            element={<Cart />}
+          />
+
+          <Route
+            path="/user/pesanan"
+            element={<Pesanan />}
+          />
+
         </Route>
 
-      
         {/* ADMIN */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminOverviewPage />} />
-          <Route path="produk" element={<AdminProduk />} />
-          <Route path="artikel" element={<AdminArtikel />} />
-          <Route path="pembeli" element={<AdminPembeli />} />
-          <Route path="pesanan" element={<AdminPembelian />} />
-          <Route path="kategori" element={<AdminKategori />} />
+        <Route
+          path="/admin"
+          element={<AdminLayout />}
+        >
+
+          <Route
+            index
+            element={<AdminOverviewPage />}
+          />
+
+          <Route
+            path="produk"
+            element={<AdminProduk />}
+          />
+
+          <Route
+            path="artikel"
+            element={<AdminArtikel />}
+          />
+
+          <Route
+            path="pembeli"
+            element={<AdminPembeli />}
+          />
+
+          <Route
+            path="pesanan"
+            element={<AdminPembelian />}
+          />
+
+          <Route
+            path="kategori"
+            element={<AdminKategori />}
+          />
+
+          <Route
+            path="laporan"
+            element={<AdminLaporan />}
+          />
+
         </Route>
 
       </Routes>
