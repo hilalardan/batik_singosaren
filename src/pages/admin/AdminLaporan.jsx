@@ -3,316 +3,400 @@ import { adminApi } from "../../api";
 import { formatRupiah, formatTanggal } from "../../utils";
 
 export default function AdminLaporan() {
-const [laporan, setLaporan] = useState([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState("");
+  const [laporan, setLaporan] = useState([]);
+  const [laporanTampil, setLaporanTampil] = useState([]);
 
-const loadLaporan = async () => {
-try {
-setLoading(true);
-setError("");
+  const [tanggalMulai, setTanggalMulai] = useState("");
+  const [tanggalAkhir, setTanggalAkhir] = useState("");
 
-  const response = await adminApi.getLaporanPenjualan();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!response?.success) {
-    setError(
-      response?.message ||
-      "Gagal mengambil laporan penjualan"
-    );
-    setLaporan([]);
-    return;
-  }
+  useEffect(() => {
+    loadLaporan();
+  }, []);
 
-  setLaporan(
-    Array.isArray(response.data)
-      ? response.data
-      : []
+  const loadLaporan = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await adminApi.getLaporanPenjualan();
+
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      const dataUrut = [...data].sort(
+        (a, b) =>
+          new Date(b.created_at) -
+          new Date(a.created_at)
+      );
+
+      setLaporan(dataUrut);
+      setLaporanTampil(dataUrut);
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.message ||
+          "Gagal mengambil laporan penjualan"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterLaporan = () => {
+    let hasil = [...laporan];
+
+    if (tanggalMulai) {
+      const mulai = new Date(
+        `${tanggalMulai}T00:00:00`
+      );
+
+      hasil = hasil.filter((item) => {
+        if (!item.created_at) return false;
+
+        const tanggal = new Date(item.created_at);
+
+        return tanggal >= mulai;
+      });
+    }
+
+    if (tanggalAkhir) {
+      const akhir = new Date(
+        `${tanggalAkhir}T23:59:59`
+      );
+
+      hasil = hasil.filter((item) => {
+        if (!item.created_at) return false;
+
+        const tanggal = new Date(item.created_at);
+
+        return tanggal <= akhir;
+      });
+    }
+
+    setLaporanTampil(hasil);
+  };
+
+  const resetFilter = () => {
+    setTanggalMulai("");
+    setTanggalAkhir("");
+    setLaporanTampil(laporan);
+  };
+
+  const totalPenjualan = laporanTampil.reduce(
+    (total, item) =>
+      total + Number(item.total || 0),
+    0
   );
-} catch (err) {
-  console.error("Gagal mengambil laporan:", err);
 
-  setError(
-    err?.message ||
-    "Gagal mengambil laporan penjualan"
+  const totalProduk = laporanTampil.reduce(
+    (total, item) =>
+      total + Number(item.jumlah || 0),
+    0
   );
 
-  setLaporan([]);
-} finally {
-  setLoading(false);
-}
-```
+  return (
+    <div className="container-fluid py-4">
 
-};
+      {/* JUDUL */}
+      <div className="mb-4">
+        <h2 className="fw-normal mb-1">
+          Laporan Penjualan
+        </h2>
 
-useEffect(() => {
-loadLaporan();
-}, []);
-
-const totalPenjualan = laporan.reduce(
-(total, item) =>
-total + Number(item.total || 0),
-0
-);
-
-const totalProduk = laporan.reduce(
-(total, item) =>
-total + Number(item.jumlah || 0),
-0
-);
-
-return ( <div className="container-fluid py-4">
-
-```
-  {/* HEADER */}
-  <div className="mb-4">
-    <h2 className="fw-bold mb-1">
-      Laporan Penjualan
-    </h2>
-
-    <p className="text-muted mb-0">
-      Laporan transaksi penjualan Batik Singosaren.
-    </p>
-  </div>
-
-  {/* RINGKASAN */}
-  <div className="row g-3 mb-4">
-
-    <div className="col-md-4">
-      <div className="card border-0 shadow-sm h-100">
-        <div className="card-body">
-          <p className="text-muted mb-1">
-            Total Transaksi
-          </p>
-
-          <h3 className="fw-bold mb-0">
-            {laporan.length}
-          </h3>
-        </div>
-      </div>
-    </div>
-
-    <div className="col-md-4">
-      <div className="card border-0 shadow-sm h-100">
-        <div className="card-body">
-          <p className="text-muted mb-1">
-            Produk Terjual
-          </p>
-
-          <h3 className="fw-bold mb-0">
-            {totalProduk}
-          </h3>
-        </div>
-      </div>
-    </div>
-
-    <div className="col-md-4">
-      <div className="card border-0 shadow-sm h-100">
-        <div className="card-body">
-          <p className="text-muted mb-1">
-            Total Penjualan
-          </p>
-
-          <h3 className="fw-bold mb-0">
-            {formatRupiah(totalPenjualan)}
-          </h3>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  {/* DATA PENJUALAN */}
-  <div className="card border-0 shadow-sm">
-    <div className="card-body">
-
-      <div className="d-flex justify-content-between align-items-center mb-3">
-
-        <h5 className="fw-bold mb-0">
-          Data Penjualan
-        </h5>
-
-        <button
-          type="button"
-          className="btn btn-outline-secondary btn-sm"
-          onClick={loadLaporan}
-          disabled={loading}
-        >
-          <i className="bi bi-arrow-clockwise me-1"></i>
-          Refresh
-        </button>
-
+        <p className="text-muted mb-0">
+          Lihat laporan penjualan Batik Singosaren berdasarkan tanggal.
+        </p>
       </div>
 
-      {/* LOADING */}
-      {loading && (
-        <div className="text-center py-5">
-          <div
-            className="spinner-border"
-            role="status"
-          ></div>
+      {/* FILTER LAPORAN */}
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-body p-4">
 
-          <p className="mt-2 text-muted mb-0">
-            Memuat laporan...
-          </p>
-        </div>
-      )}
+          <h5 className="fw-bold mb-4">
+            Filter Laporan
+          </h5>
 
-      {/* ERROR */}
-      {!loading && error && (
-        <div className="alert alert-danger">
-          {error}
-        </div>
-      )}
+          <div className="row g-3 align-items-end">
 
-      {/* KOSONG */}
-      {!loading &&
-        !error &&
-        laporan.length === 0 && (
-          <div className="text-center py-5 text-muted">
+            <div className="col-md-4">
+              <label className="form-label">
+                Tanggal Mulai
+              </label>
 
-            <i className="bi bi-bar-chart fs-1"></i>
+              <input
+                type="date"
+                className="form-control"
+                value={tanggalMulai}
+                onChange={(e) =>
+                  setTanggalMulai(e.target.value)
+                }
+              />
+            </div>
 
-            <p className="mt-2 mb-0">
-              Belum ada data penjualan.
-            </p>
+            <div className="col-md-4">
+              <label className="form-label">
+                Tanggal Akhir
+              </label>
+
+              <input
+                type="date"
+                className="form-control"
+                value={tanggalAkhir}
+                onChange={(e) =>
+                  setTanggalAkhir(e.target.value)
+                }
+              />
+            </div>
+
+            <div className="col-md-4">
+              <div className="d-flex gap-2">
+
+                <button
+                  type="button"
+                  className="btn btn-dark"
+                  onClick={filterLaporan}
+                >
+                  Tampilkan Laporan
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-outline-dark"
+                  onClick={resetFilter}
+                >
+                  Reset
+                </button>
+
+              </div>
+            </div>
 
           </div>
-        )}
+        </div>
+      </div>
 
-      {/* TABEL */}
-      {!loading &&
-        !error &&
-        laporan.length > 0 && (
+      {/* RINGKASAN */}
+      <div className="row g-3 mb-4">
 
-          <div className="table-responsive">
+        <div className="col-md-6">
+          <div className="card border-0 shadow-sm h-100">
+            <div className="card-body p-4">
 
-            <table className="table table-hover align-middle">
+              <p className="text-muted mb-1">
+                Jumlah Transaksi
+              </p>
 
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Tanggal</th>
-                  <th>Pembeli</th>
-                  <th>Produk</th>
-                  <th>Harga</th>
-                  <th>Jumlah</th>
-                  <th>Total</th>
-                  <th>Pembayaran</th>
-                  <th>Pengiriman</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
+              <h3 className="fw-bold mb-1">
+                {laporanTampil.length}
+              </h3>
 
-              <tbody>
+              <small className="text-muted">
+                transaksi pada laporan
+              </small>
 
-                {laporan.map((item, index) => (
+            </div>
+          </div>
+        </div>
 
-                  <tr
-                    key={
-                      item.id_laporan ||
-                      item.id_pembelian ||
-                      item.id_detail ||
-                      item.id ||
-                      index
-                    }
-                  >
+        <div className="col-md-6">
+          <div className="card border-0 shadow-sm h-100">
+            <div className="card-body p-4">
 
-                    <td>
-                      {index + 1}
-                    </td>
+              <p className="text-muted mb-1">
+                Total Penjualan
+              </p>
 
-                    <td>
-                      {item.created_at
-                        ? formatTanggal(item.created_at)
-                        : "-"}
-                    </td>
+              <h3 className="fw-bold mb-1">
+                {formatRupiah(totalPenjualan)}
+              </h3>
 
-                    <td>
-                      {item.nama_pembeli ||
-                        item.nama_user ||
-                        "-"}
-                    </td>
+              <small className="text-muted">
+                total harga penjualan
+              </small>
 
-                    <td>
-                      {item.nama_produk ||
-                        "-"}
-                    </td>
+            </div>
+          </div>
+        </div>
 
-                    <td>
-                      {formatRupiah(
-                        Number(item.harga || 0)
-                      )}
-                    </td>
+      </div>
 
-                    <td>
-                      {Number(
-                        item.jumlah || 0
-                      )}
-                    </td>
+      {/* DATA PENJUALAN */}
+      <div className="card border-0 shadow-sm">
 
-                    <td className="fw-semibold">
-                      {formatRupiah(
-                        Number(item.total || 0)
-                      )}
-                    </td>
+        <div className="card-body">
 
-                    <td>
-                      {item.metode_pembayaran ||
-                        "-"}
-                    </td>
+          <div className="d-flex justify-content-between align-items-center mb-3">
 
-                    <td>
-                      {item.pengiriman ||
-                        item.metode_pengiriman ||
-                        "-"}
-                    </td>
+            <div>
+              <h5 className="fw-bold mb-1">
+                Laporan Penjualan
+              </h5>
 
-                    <td>
-                      <span className="badge bg-secondary">
-                        {item.status ||
-                          "Tertunda"}
-                      </span>
-                    </td>
+              <p className="text-muted mb-0">
+                Semua data penjualan
+              </p>
+            </div>
 
-                  </tr>
+            <span className="text-muted">
+              {laporanTampil.length} Transaksi
+            </span>
 
-                ))}
+          </div>
 
-              </tbody>
+          {loading && (
+            <div className="text-center py-5">
 
-              <tfoot>
+              <div className="spinner-border"></div>
 
-                <tr>
+              <p className="mt-2 text-muted">
+                Memuat laporan...
+              </p>
 
-                  <th
-                    colSpan="6"
-                    className="text-end"
-                  >
-                    Total Penjualan
-                  </th>
+            </div>
+          )}
 
-                  <th>
-                    {formatRupiah(
-                      totalPenjualan
+          {!loading && error && (
+            <div className="alert alert-danger">
+              {error}
+            </div>
+          )}
+
+          {!loading &&
+            !error &&
+            laporanTampil.length === 0 && (
+              <div className="text-center py-5 text-muted">
+
+                <i className="bi bi-bar-chart fs-1"></i>
+
+                <p className="mt-2 mb-0">
+                  Belum ada data penjualan.
+                </p>
+
+              </div>
+            )}
+
+          {!loading &&
+            !error &&
+            laporanTampil.length > 0 && (
+
+              <div className="table-responsive">
+
+                <table className="table table-hover align-middle">
+
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Tanggal</th>
+                      <th>Pembeli</th>
+                      <th>Produk</th>
+                      <th>Harga</th>
+                      <th>Jumlah</th>
+                      <th>Total</th>
+                      <th>Pembayaran</th>
+                      <th>Pengiriman</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+
+                    {laporanTampil.map(
+                      (item, index) => (
+                        <tr key={item.id}>
+
+                          <td>
+                            {index + 1}
+                          </td>
+
+                          <td>
+                            {formatTanggal(
+                              item.created_at
+                            )}
+                          </td>
+
+                          <td>
+                            {item.nama_pembeli ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {item.nama_produk ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {formatRupiah(
+                              item.harga || 0
+                            )}
+                          </td>
+
+                          <td>
+                            {item.jumlah || 0}
+                          </td>
+
+                          <td className="fw-semibold">
+                            {formatRupiah(
+                              item.total || 0
+                            )}
+                          </td>
+
+                          <td>
+                            {item.metode_pembayaran ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {item.pengiriman ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            <span className="badge bg-secondary">
+                              {item.status ||
+                                "Tertunda"}
+                            </span>
+                          </td>
+
+                        </tr>
+                      )
                     )}
-                  </th>
 
-                  <th colSpan="3"></th>
+                  </tbody>
 
-                </tr>
+                  <tfoot>
 
-              </tfoot>
+                    <tr>
 
-            </table>
+                      <th
+                        colSpan="6"
+                        className="text-end"
+                      >
+                        Total Penjualan
+                      </th>
 
-          </div>
+                      <th>
+                        {formatRupiah(
+                          totalPenjualan
+                        )}
+                      </th>
 
-        )}
+                      <th colSpan="3"></th>
+
+                    </tr>
+
+                  </tfoot>
+
+                </table>
+
+              </div>
+            )}
+
+        </div>
+      </div>
 
     </div>
-  </div>
-
-</div>
-
-);
+  );
 }
