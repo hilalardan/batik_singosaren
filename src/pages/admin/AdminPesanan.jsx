@@ -7,21 +7,15 @@ export default function AdminPesanan() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedPesanan, setSelectedPesanan] = useState(null);
-
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // =========================
-  // AMBIL DATA PESANAN
-  // =========================
   const loadPesanan = async () => {
     try {
       setLoading(true);
       setError("");
 
       const res = await adminApi.getPembelian();
-
-      console.log("DATA PESANAN:", res.data);
 
       if (!res.success) {
         setError(
@@ -47,9 +41,6 @@ export default function AdminPesanan() {
     loadPesanan();
   }, []);
 
-  // =========================
-  // BUKA DETAIL
-  // =========================
   const handleDetail = async (item) => {
     try {
       setSelectedPesanan(item);
@@ -78,9 +69,6 @@ export default function AdminPesanan() {
     }
   };
 
-  // =========================
-  // UPDATE STATUS
-  // =========================
   const handleUpdateStatus = async () => {
     if (!selectedPesanan || !status) return;
 
@@ -123,9 +111,6 @@ export default function AdminPesanan() {
     }
   };
 
-  // =========================
-  // HAPUS PESANAN
-  // =========================
   const handleDelete = async (item) => {
     const id =
       item.id_pembelian ||
@@ -164,9 +149,6 @@ export default function AdminPesanan() {
     }
   };
 
-  // =========================
-  // FORMAT DATA
-  // =========================
   const getId = (item) =>
     item.id_pembelian ||
     item.id_pesanan ||
@@ -179,26 +161,85 @@ export default function AdminPesanan() {
     item.username ||
     item.uname ||
     item.nama_user ||
+    item.nama_d ||
+    item.nama_b ||
     "-";
 
-  const getTanggal = (item) =>
-    item.created_at ||
-    item.tanggal_pembelian ||
-    item.tanggal ||
-    item.createdAt ||
+  const getTanggal = (item) => {
+    const tanggal =
+      item.created_at ||
+      item.tanggal_pembelian ||
+      item.tanggal ||
+      item.createdAt;
+
+    if (!tanggal) return "-";
+
+    const hasil = new Date(tanggal);
+
+    if (isNaN(hasil.getTime())) {
+      return "-";
+    }
+
+    return hasil.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const getProduk = (item) =>
+    item.nama_produk ||
+    item.nama ||
+    item.nama_barang ||
     "-";
+
+  const getHarga = (item) =>
+    Number(
+      item.harga ||
+      item.harga_produk ||
+      item.price ||
+      0
+    );
+
+  const getJumlah = (item) =>
+    Number(item.jumlah || item.qty || 1);
 
   const getStatus = (item) =>
     item.status ||
     item.status_pesanan ||
     "Menunggu";
 
-  const getTotal = (item) =>
-    item.total ||
-    item.total_harga ||
-    item.grand_total ||
-    item.jumlah_total ||
-    0;
+  const getTotal = (item) => {
+    if (
+      item.total !== undefined &&
+      item.total !== null
+    ) {
+      return Number(item.total);
+    }
+
+    if (
+      item.total_harga !== undefined &&
+      item.total_harga !== null
+    ) {
+      return Number(item.total_harga);
+    }
+
+    if (
+      item.grand_total !== undefined &&
+      item.grand_total !== null
+    ) {
+      return Number(item.grand_total);
+    }
+
+    if (
+      item.jumlah_total !== undefined &&
+      item.jumlah_total !== null
+    ) {
+      return Number(item.jumlah_total);
+    }
+
+    return getHarga(item) * getJumlah(item);
+  };
 
   const getStatusClass = (value) => {
     const statusLower =
@@ -213,7 +254,8 @@ export default function AdminPesanan() {
 
     if (
       statusLower.includes("proses") ||
-      statusLower.includes("dikirim")
+      statusLower.includes("dikirim") ||
+      statusLower.includes("dikemas")
     ) {
       return "primary";
     }
@@ -229,194 +271,176 @@ export default function AdminPesanan() {
   };
 
   return (
-    <div className="container-fluid">
-
-      {/* HEADER */}
+    <div className="container-fluid py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-
         <div>
           <h2 className="fw-bold mb-1">
-            Kelola Pesanan
+            Pesanan
           </h2>
-
           <p className="text-muted mb-0">
-            Kelola pesanan pembeli Batik Singosaren.
+            Kelola pesanan pelanggan Batik Singosaren.
           </p>
         </div>
 
         <button
-          type="button"
-          className="btn btn-outline-secondary"
+          className="btn btn-outline-primary"
           onClick={loadPesanan}
         >
-          <i className="bi bi-arrow-clockwise me-1"></i>
+          <i className="bi bi-arrow-clockwise me-2"></i>
           Refresh
         </button>
-
       </div>
 
-      {/* ERROR */}
       {error && (
         <div className="alert alert-danger">
           {error}
         </div>
       )}
 
-      {/* LOADING */}
-      {loading ? (
-        <div className="text-center py-5">
-          <div
-            className="spinner-border"
-            role="status"
-          ></div>
+      <div className="card border-0 shadow-sm">
+        <div className="card-body">
+          {loading ? (
+            <div className="text-center py-5">
+              <div
+                className="spinner-border text-primary"
+                role="status"
+              ></div>
 
-          <p className="mt-3 text-muted">
-            Memuat data pesanan...
-          </p>
-        </div>
-      ) : (
-        <div className="card border-0 shadow-sm">
+              <p className="mt-3 text-muted">
+                Memuat data pesanan...
+              </p>
+            </div>
+          ) : pesanan.length === 0 ? (
+            <div className="text-center py-5">
+              <i className="bi bi-bag-x fs-1 text-muted"></i>
 
-          <div className="card-body">
-
+              <p className="mt-3 text-muted">
+                Belum ada pesanan.
+              </p>
+            </div>
+          ) : (
             <div className="table-responsive">
-
-              <table className="table align-middle">
-
+              <table className="table table-hover align-middle">
                 <thead>
                   <tr>
                     <th>No</th>
-                    <th>ID Pesanan</th>
                     <th>Pembeli</th>
                     <th>Tanggal</th>
+                    <th>Produk</th>
+                    <th>Harga</th>
+                    <th>Jumlah</th>
                     <th>Total</th>
                     <th>Status</th>
-                    <th>Aksi</th>
+                    <th className="text-center">
+                      Aksi
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
+                  {pesanan.map((item, index) => {
+                    const statusPesanan =
+                      getStatus(item);
 
-                  {pesanan.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="7"
-                        className="text-center py-5 text-muted"
-                      >
-                        Belum ada pesanan.
-                      </td>
-                    </tr>
-                  ) : (
-                    pesanan.map(
-                      (item, index) => {
-                        const statusValue =
-                          getStatus(item);
+                    return (
+                      <tr key={getId(item)}>
+                        <td>
+                          {index + 1}
+                        </td>
 
-                        return (
-                          <tr key={getId(item)}>
+                        <td>
+                          <div className="fw-semibold">
+                            {getNama(item)}
+                          </div>
 
-                            <td>
-                              {index + 1}
-                            </td>
+                          {item.email && (
+                            <small className="text-muted">
+                              {item.email}
+                            </small>
+                          )}
+                        </td>
 
-                            <td>
-                              <strong>
-                                #{getId(item)}
-                              </strong>
-                            </td>
+                        <td>
+                          {getTanggal(item)}
+                        </td>
 
-                            <td>
-                              {getNama(item)}
-                            </td>
+                        <td>
+                          {getProduk(item)}
+                        </td>
 
-                            <td>
-                              {getTanggal(item)}
-                            </td>
+                        <td>
+                          {formatRupiah(
+                            getHarga(item)
+                          )}
+                        </td>
 
-                            <td>
-                              {formatRupiah(
-                                Number(
-                                  getTotal(item)
-                                )
-                              )}
-                            </td>
+                        <td>
+                          {getJumlah(item)}
+                        </td>
 
-                            <td>
-                              <span
-                                className={`badge text-bg-${getStatusClass(
-                                  statusValue
-                                )}`}
-                              >
-                                {statusValue}
-                              </span>
-                            </td>
+                        <td className="fw-semibold">
+                          {formatRupiah(
+                            getTotal(item)
+                          )}
+                        </td>
 
-                            <td>
+                        <td>
+                          <span
+                            className={`badge text-bg-${getStatusClass(
+                              statusPesanan
+                            )}`}
+                          >
+                            {statusPesanan}
+                          </span>
+                        </td>
 
-                              <div className="d-flex gap-2">
+                        <td className="text-center">
+                          <div className="d-flex justify-content-center gap-2">
+                            <button
+                              className="btn btn-sm btn-outline-primary"
+                              onClick={() =>
+                                handleDetail(item)
+                              }
+                              title="Detail"
+                            >
+                              <i className="bi bi-eye"></i>
+                            </button>
 
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-primary"
-                                  onClick={() =>
-                                    handleDetail(item)
-                                  }
-                                >
-                                  <i className="bi bi-eye"></i>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-danger"
-                                  onClick={() =>
-                                    handleDelete(item)
-                                  }
-                                >
-                                  <i className="bi bi-trash"></i>
-                                </button>
-
-                              </div>
-
-                            </td>
-
-                          </tr>
-                        );
-                      }
-                    )
-                  )}
-
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() =>
+                                handleDelete(item)
+                              }
+                              title="Hapus"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
-
               </table>
-
             </div>
-
-          </div>
-
+          )}
         </div>
-      )}
+      </div>
 
-      {/* MODAL DETAIL */}
       {selectedPesanan && (
         <div
           className="modal fade show d-block"
           tabIndex="-1"
-          role="dialog"
           style={{
             backgroundColor:
-              "rgba(0,0,0,0.5)",
+              "rgba(0, 0, 0, 0.5)",
           }}
         >
-
           <div className="modal-dialog modal-lg modal-dialog-centered">
-
             <div className="modal-content">
-
               <div className="modal-header">
-
                 <h5 className="modal-title">
-                  Detail Pesanan #
-                  {getId(selectedPesanan)}
+                  Detail Pesanan
                 </h5>
 
                 <button
@@ -426,53 +450,117 @@ export default function AdminPesanan() {
                     setSelectedPesanan(null)
                   }
                 ></button>
-
               </div>
 
               <div className="modal-body">
-
                 <div className="row g-3">
-
                   <div className="col-md-6">
-                    <div className="small text-muted">
-                      Pembeli
-                    </div>
+                    <small className="text-muted">
+                      ID Pesanan
+                    </small>
 
-                    <strong>
-                      {getNama(selectedPesanan)}
-                    </strong>
+                    <div className="fw-semibold">
+                      #{getId(selectedPesanan)}
+                    </div>
                   </div>
 
                   <div className="col-md-6">
-                    <div className="small text-muted">
-                      Total
-                    </div>
+                    <small className="text-muted">
+                      Pembeli
+                    </small>
 
-                    <strong>
+                    <div className="fw-semibold">
+                      {getNama(selectedPesanan)}
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <small className="text-muted">
+                      Tanggal
+                    </small>
+
+                    <div className="fw-semibold">
+                      {getTanggal(
+                        selectedPesanan
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <small className="text-muted">
+                      Produk
+                    </small>
+
+                    <div className="fw-semibold">
+                      {getProduk(
+                        selectedPesanan
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <small className="text-muted">
+                      Harga
+                    </small>
+
+                    <div className="fw-semibold">
                       {formatRupiah(
-                        Number(
-                          getTotal(
-                            selectedPesanan
-                          )
+                        getHarga(
+                          selectedPesanan
                         )
                       )}
-                    </strong>
+                    </div>
                   </div>
 
-                  <div className="col-12">
-                    <div className="small text-muted">
-                      Alamat
-                    </div>
+                  <div className="col-md-6">
+                    <small className="text-muted">
+                      Jumlah
+                    </small>
 
-                    <div>
-                      {selectedPesanan.alamat ||
-                        selectedPesanan.alamat_pengiriman ||
+                    <div className="fw-semibold">
+                      {getJumlah(
+                        selectedPesanan
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <small className="text-muted">
+                      Total
+                    </small>
+
+                    <div className="fw-bold text-primary">
+                      {formatRupiah(
+                        getTotal(
+                          selectedPesanan
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <small className="text-muted">
+                      Pembayaran
+                    </small>
+
+                    <div className="fw-semibold">
+                      {selectedPesanan.metode_pembayaran ||
                         "-"}
                     </div>
                   </div>
 
                   <div className="col-md-6">
+                    <small className="text-muted">
+                      Pengiriman
+                    </small>
 
+                    <div className="fw-semibold">
+                      {selectedPesanan.pengiriman ||
+                        "-"}
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
                     <label className="form-label">
                       Status Pesanan
                     </label>
@@ -481,23 +569,29 @@ export default function AdminPesanan() {
                       className="form-select"
                       value={status}
                       onChange={(e) =>
-                        setStatus(e.target.value)
+                        setStatus(
+                          e.target.value
+                        )
                       }
                     >
                       <option value="">
                         Pilih status
                       </option>
 
-                      <option value="Menunggu">
-                        Menunggu
+                      <option value="Tertunda">
+                        Tertunda
                       </option>
 
-                      <option value="Diproses">
-                        Diproses
+                      <option value="Dikemas">
+                        Dikemas
                       </option>
 
                       <option value="Dikirim">
                         Dikirim
+                      </option>
+
+                      <option value="Diterima">
+                        Diterima
                       </option>
 
                       <option value="Selesai">
@@ -508,113 +602,11 @@ export default function AdminPesanan() {
                         Dibatalkan
                       </option>
                     </select>
-
                   </div>
-
-                  {/* DETAIL PRODUK */}
-                  <div className="col-12">
-
-                    <div className="small text-muted mb-2">
-                      Detail Produk
-                    </div>
-
-                    {Array.isArray(
-                      selectedPesanan.detail
-                    ) &&
-                    selectedPesanan.detail.length > 0 ? (
-                      <div className="table-responsive">
-
-                        <table className="table table-sm">
-
-                          <thead>
-                            <tr>
-                              <th>Produk</th>
-                              <th>Harga</th>
-                              <th>Jumlah</th>
-                              <th>Subtotal</th>
-                            </tr>
-                          </thead>
-
-                          <tbody>
-
-                            {selectedPesanan.detail.map(
-                              (produk, index) => {
-
-                                const harga =
-                                  Number(
-                                    produk.harga ||
-                                    produk.harga_produk ||
-                                    0
-                                  );
-
-                                const jumlah =
-                                  Number(
-                                    produk.jumlah ||
-                                    produk.qty ||
-                                    produk.quantity ||
-                                    0
-                                  );
-
-                                const subtotal =
-                                  Number(
-                                    produk.subtotal ||
-                                    harga * jumlah
-                                  );
-
-                                return (
-                                  <tr
-                                    key={
-                                      produk.id_detail ||
-                                      index
-                                    }
-                                  >
-
-                                    <td>
-                                      {produk.nama_produk ||
-                                        produk.nama ||
-                                        "-"}
-                                    </td>
-
-                                    <td>
-                                      {formatRupiah(
-                                        harga
-                                      )}
-                                    </td>
-
-                                    <td>
-                                      {jumlah}
-                                    </td>
-
-                                    <td>
-                                      {formatRupiah(
-                                        subtotal
-                                      )}
-                                    </td>
-
-                                  </tr>
-                                );
-                              }
-                            )}
-
-                          </tbody>
-
-                        </table>
-
-                      </div>
-                    ) : (
-                      <div className="text-muted">
-                        Detail produk tidak tersedia.
-                      </div>
-                    )}
-
-                  </div>
-
                 </div>
-
               </div>
 
               <div className="modal-footer">
-
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -629,9 +621,7 @@ export default function AdminPesanan() {
                   type="button"
                   className="btn btn-primary"
                   onClick={handleUpdateStatus}
-                  disabled={
-                    saving || !status
-                  }
+                  disabled={saving || !status}
                 >
                   {saving ? (
                     <>
@@ -642,21 +632,16 @@ export default function AdminPesanan() {
                     </>
                   ) : (
                     <>
-                      <i className="bi bi-check-lg me-1"></i>
+                      <i className="bi bi-check-lg me-2"></i>
                       Simpan Status
                     </>
                   )}
                 </button>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 }
