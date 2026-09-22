@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { mediaUrl, onImgError } from "../utils";
-import { api } from "../api";
+import { api, apiRequest } from "../api";
 
 function Toko() {
   const [produk, setProduk] = useState([]);
@@ -11,10 +12,11 @@ function Toko() {
   const [kategori, setKategori] = useState("Semua");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/produk")
-      .then((res) => res.json())
+    apiRequest("/api/produk")
       .then((data) => {
-        setProduk(Array.isArray(data.data) ? data.data : []);
+        setProduk(
+          Array.isArray(data.data) ? data.data : []
+        );
         setLoading(false);
       })
       .catch((error) => {
@@ -35,12 +37,13 @@ function Toko() {
   }, []);
 
   const produkFilter = produk.filter((item) => {
-    const cocokNama = item.nama_produk
+    const cocokNama = (item.nama_produk || "")
       .toLowerCase()
       .includes(pencarian.toLowerCase());
 
     const cocokKategori =
-      kategori === "Semua" || item.kategori === kategori;
+      kategori === "Semua" ||
+      item.kategori === kategori;
 
     return cocokNama && cocokKategori;
   });
@@ -71,7 +74,9 @@ function Toko() {
               className="form-control"
               placeholder="Cari produk batik..."
               value={pencarian}
-              onChange={(e) => setPencarian(e.target.value)}
+              onChange={(e) =>
+                setPencarian(e.target.value)
+              }
             />
           </div>
 
@@ -79,7 +84,9 @@ function Toko() {
             <select
               className="form-select"
               value={kategori}
-              onChange={(e) => setKategori(e.target.value)}
+              onChange={(e) =>
+                setKategori(e.target.value)
+              }
             >
               <option value="Semua">
                 Semua Kategori
@@ -123,7 +130,6 @@ function Toko() {
               >
                 <div className="card border-0 shadow-sm h-100">
 
-                  {/* GAMBAR */}
                   {item.gambar && (
                     <img
                       src={mediaUrl(item.gambar)}
@@ -152,7 +158,10 @@ function Toko() {
                     </p>
 
                     <h6 className="fw-bold text-warning mt-auto mb-3">
-                      Rp {Number(item.harga).toLocaleString("id-ID")}
+                      Rp{" "}
+                      {Number(item.harga).toLocaleString(
+                        "id-ID"
+                      )}
                     </h6>
 
                     <Link
