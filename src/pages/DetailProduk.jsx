@@ -1,6 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { mediaUrl, onImgError } from "../utils";
+import { apiRequest } from "../api";
 
 function ProductDetailPage() {
   const { id } = useParams();
@@ -11,14 +13,7 @@ function ProductDetailPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/produk/${id}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Produk tidak ditemukan");
-        }
-
-        return res.json();
-      })
+    apiRequest(`/api/produk/${id}`)
       .then((data) => {
         if (data.success) {
           setProduk(data.data);
@@ -36,7 +31,6 @@ function ProductDetailPage() {
   }, [id]);
 
   const tambahKeKeranjang = () => {
-    // Cek apakah user sudah login
     const token = localStorage.getItem("toko_token");
 
     if (!token) {
@@ -84,7 +78,6 @@ function ProductDetailPage() {
 
     alert("Produk berhasil ditambahkan ke keranjang!");
 
-    // Masuk ke keranjang user
     navigate("/user/cart");
   };
 
@@ -118,7 +111,6 @@ function ProductDetailPage() {
         {!loading && !error && produk && (
           <div className="row g-5">
 
-            {/* GAMBAR PRODUK */}
             <div className="col-md-6">
               <div className="rounded-4 overflow-hidden shadow-sm">
                 <img
@@ -134,7 +126,6 @@ function ProductDetailPage() {
               </div>
             </div>
 
-            {/* DETAIL PRODUK */}
             <div className="col-md-6">
 
               <span className="badge bg-warning text-dark mb-3">
@@ -150,7 +141,8 @@ function ProductDetailPage() {
               </p>
 
               <h2 className="fw-bold text-warning mb-4">
-                Rp {Number(produk.harga).toLocaleString("id-ID")}
+                Rp{" "}
+                {Number(produk.harga).toLocaleString("id-ID")}
               </h2>
 
               <button
