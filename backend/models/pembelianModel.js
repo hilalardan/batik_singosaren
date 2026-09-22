@@ -1,5 +1,6 @@
 // backend/models/pembelianModel.js
 const db = require("../config/db");
+
 const findAllPembelianWithDetail = () => {
   return new Promise((resolve, reject) => {
     const sql = `
@@ -7,6 +8,7 @@ const findAllPembelianWithDetail = () => {
         p.*,
         pr.nama_produk,
         pr.harga,
+        (pr.harga * p.jumlah) AS total,
         pr.gambar AS gambar_produk,
         u.nama_d,
         u.nama_b,
