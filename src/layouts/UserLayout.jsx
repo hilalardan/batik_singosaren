@@ -1,3 +1,4 @@
+
 import {
   NavLink,
   Outlet,
@@ -30,12 +31,6 @@ export default function UserLayout() {
 
           {/* BRAND */}
           <div className="user-brand">
-
-            <img
-              src={SITE.logo_toko}
-              alt={SITE.nama_toko}
-            />
-
             <div>
               <h5>{SITE.nama_toko}</h5>
 
@@ -43,7 +38,6 @@ export default function UserLayout() {
                 Halaman Pembeli
               </small>
             </div>
-
           </div>
 
           {/* MENU */}
@@ -108,10 +102,7 @@ export default function UserLayout() {
               className="user-menu-item"
             >
               <i className="bi bi-house"></i>
-
-              <span>
-                Kembali ke Website
-              </span>
+              <span>Kembali ke Website</span>
             </NavLink>
 
             <button
@@ -120,14 +111,10 @@ export default function UserLayout() {
               onClick={handleLogout}
             >
               <i className="bi bi-box-arrow-right"></i>
-
-              <span>
-                Keluar
-              </span>
+              <span>Keluar</span>
             </button>
 
           </div>
-
         </aside>
 
         {/* KONTEN PEMBELI */}
@@ -163,10 +150,7 @@ export default function UserLayout() {
     );
   }
 
-  // =========================
   // LOGIN & REGISTER
-  // TANPA FOOTER
-  // =========================
   const isAuthPage =
     location.pathname === "/login" ||
     location.pathname === "/register";
@@ -175,22 +159,16 @@ export default function UserLayout() {
     return (
       <>
         <Header />
-
         <Outlet />
       </>
     );
   }
 
-  // =========================
   // WEBSITE UTAMA
-  // DENGAN FOOTER
-  // =========================
   return (
     <>
       <Header />
-
       <Outlet />
-
       <Footer />
     </>
   );
