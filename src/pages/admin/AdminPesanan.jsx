@@ -174,17 +174,21 @@ export default function AdminPesanan() {
 
     if (!tanggal) return "-";
 
-    const hasil = new Date(tanggal);
+    const tanggalString = String(tanggal);
 
-    if (isNaN(hasil.getTime())) {
-      return "-";
+    // Ambil bagian tanggal dari format:
+    // 2026-09-21T15:00:52.000Z
+    const bagianTanggal =
+      tanggalString.split("T")[0];
+
+    const bagian =
+      bagianTanggal.split("-");
+
+    if (bagian.length === 3) {
+      return `${bagian[2]}/${bagian[1]}/${bagian[0]}`;
     }
 
-    return hasil.toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return tanggalString;
   };
 
   const getProduk = (item) =>
@@ -277,6 +281,7 @@ export default function AdminPesanan() {
           <h2 className="fw-bold mb-1">
             Pesanan
           </h2>
+
           <p className="text-muted mb-0">
             Kelola pesanan pelanggan Batik Singosaren.
           </p>
