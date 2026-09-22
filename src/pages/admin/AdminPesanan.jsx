@@ -21,6 +21,8 @@ export default function AdminPesanan() {
 
       const res = await adminApi.getPembelian();
 
+      console.log("DATA PESANAN:", res.data);
+
       if (!res.success) {
         setError(
           res.message || "Gagal mengambil data pesanan."
@@ -394,9 +396,7 @@ export default function AdminPesanan() {
         </div>
       )}
 
-      {/* =========================
-          MODAL DETAIL
-      ========================= */}
+      {/* MODAL DETAIL */}
       {selectedPesanan && (
         <div
           className="modal fade show d-block"
