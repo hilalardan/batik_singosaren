@@ -13,6 +13,7 @@ function Pesanan() {
   const [pesanan, setPesanan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedPesanan, setSelectedPesanan] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("toko_token");
@@ -90,6 +91,20 @@ function Pesanan() {
       item.created_at ||
         item.tanggal_pembelian ||
         item.createdAt
+    );
+  };
+
+  const getTotal = (item) => {
+    if (
+      item.total !== undefined &&
+      item.total !== null
+    ) {
+      return Number(item.total);
+    }
+
+    return (
+      Number(item.harga || 0) *
+      Number(item.jumlah || 1)
     );
   };
 
@@ -263,10 +278,16 @@ function Pesanan() {
 
                   <div className="pesanan-action">
 
-                    <span className="pesanan-detail-button">
+                    <button
+                      type="button"
+                      className="pesanan-detail-button border-0"
+                      onClick={() =>
+                        setSelectedPesanan(item)
+                      }
+                    >
                       <i className="bi bi-receipt me-2"></i>
-                      Pesanan
-                    </span>
+                      Rincian
+                    </button>
 
                   </div>
 
@@ -276,6 +297,185 @@ function Pesanan() {
 
           </div>
 
+        </div>
+      )}
+
+      {/* MODAL RINCIAN PESANAN */}
+      {selectedPesanan && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  Rincian Pesanan
+                </h5>
+
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() =>
+                    setSelectedPesanan(null)
+                  }
+                ></button>
+              </div>
+
+              <div className="modal-body">
+
+                <div className="text-center mb-4">
+                  <div
+                    className="mx-auto rounded overflow-hidden"
+                    style={{
+                      width: "120px",
+                      height: "120px",
+                    }}
+                  >
+                    {selectedPesanan.gambar_produk ? (
+                      <img
+                        src={mediaUrl(
+                          selectedPesanan.gambar_produk
+                        )}
+                        onError={onImgError}
+                        alt={
+                          selectedPesanan.nama_produk ||
+                          "Produk Batik"
+                        }
+                        className="w-100 h-100"
+                        style={{
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-light">
+                        <i className="bi bi-image fs-1 text-muted"></i>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <small className="text-muted">
+                    Produk
+                  </small>
+
+                  <div className="fw-semibold">
+                    {selectedPesanan.nama_produk ||
+                      "Produk Batik"}
+                  </div>
+                </div>
+
+                <div className="row g-3">
+
+                  <div className="col-6">
+                    <small className="text-muted">
+                      Jumlah
+                    </small>
+
+                    <div className="fw-semibold">
+                      {selectedPesanan.jumlah || 1} barang
+                    </div>
+                  </div>
+
+                  <div className="col-6">
+                    <small className="text-muted">
+                      Harga
+                    </small>
+
+                    <div className="fw-semibold">
+                      {formatRupiah(
+                        selectedPesanan.harga || 0
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="col-6">
+                    <small className="text-muted">
+                      Tanggal
+                    </small>
+
+                    <div className="fw-semibold">
+                      {getTanggal(selectedPesanan)}
+                    </div>
+                  </div>
+
+                  <div className="col-6">
+                    <small className="text-muted">
+                      Total
+                    </small>
+
+                    <div className="fw-bold">
+                      {formatRupiah(
+                        getTotal(selectedPesanan)
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="col-6">
+                    <small className="text-muted">
+                      Pembayaran
+                    </small>
+
+                    <div className="fw-semibold">
+                      {selectedPesanan.metode_pembayaran ||
+                        "-"}
+                    </div>
+                  </div>
+
+                  <div className="col-6">
+                    <small className="text-muted">
+                      Pengiriman
+                    </small>
+
+                    <div className="fw-semibold">
+                      {selectedPesanan.pengiriman ||
+                        "-"}
+                    </div>
+                  </div>
+
+                </div>
+
+                <hr />
+
+                <div className="d-flex justify-content-between align-items-center">
+
+                  <span className="text-muted">
+                    Status Pesanan
+                  </span>
+
+                  <span
+                    className={getStatusClass(
+                      getStatus(selectedPesanan)
+                    )}
+                  >
+                    {getStatus(selectedPesanan)}
+                  </span>
+
+                </div>
+
+              </div>
+
+              <div className="modal-footer">
+
+                <button
+                  type="button"
+                  className="btn btn-dark"
+                  onClick={() =>
+                    setSelectedPesanan(null)
+                  }
+                >
+                  Tutup
+                </button>
+
+              </div>
+
+            </div>
+          </div>
         </div>
       )}
 
