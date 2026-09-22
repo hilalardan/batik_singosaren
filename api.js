@@ -41,12 +41,10 @@ const err = new Error(
 body.message || "Permintaan gagal"
 );
 
-```
 err.status = res.status;
 err.body = body;
 
 throw err;
-```
 
 }
 
