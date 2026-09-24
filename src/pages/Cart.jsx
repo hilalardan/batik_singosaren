@@ -24,19 +24,57 @@ function Cart() {
   });
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("keranjang") || "[]");
+    const data = JSON.parse(
+      localStorage.getItem("keranjang") || "[]"
+    );
+
     setKeranjang(data);
+
+    const token = localStorage.getItem("toko_token");
+
+    if (token) {
+      pembeliApi
+        .getMe()
+        .then((response) => {
+          const user =
+            response.data ||
+            response.user ||
+            response;
+
+          setForm((prev) => ({
+            ...prev,
+            nama_pembeli:
+              user.nama ||
+              user.nama_pembeli ||
+              user.nama_lengkap ||
+              user.name ||
+              "",
+          }));
+        })
+        .catch((error) => {
+          console.error(
+            "Gagal mengambil data pembeli:",
+            error
+          );
+        });
+    }
   }, []);
 
   const simpanKeranjang = (data) => {
     setKeranjang(data);
-    localStorage.setItem("keranjang", JSON.stringify(data));
+    localStorage.setItem(
+      "keranjang",
+      JSON.stringify(data)
+    );
   };
 
   const tambahJumlah = (id) => {
     const data = keranjang.map((item) =>
       item.id_produk === id
-        ? { ...item, jumlah: item.jumlah + 1 }
+        ? {
+            ...item,
+            jumlah: item.jumlah + 1,
+          }
         : item
     );
 
@@ -47,7 +85,10 @@ function Cart() {
     const data = keranjang
       .map((item) =>
         item.id_produk === id
-          ? { ...item, jumlah: item.jumlah - 1 }
+          ? {
+              ...item,
+              jumlah: item.jumlah - 1,
+            }
           : item
       )
       .filter((item) => item.jumlah > 0);
@@ -74,24 +115,33 @@ function Cart() {
 
   const total = keranjang.reduce(
     (sum, item) =>
-      sum + Number(item.harga) * Number(item.jumlah),
+      sum +
+      Number(item.harga) *
+        Number(item.jumlah),
     0
   );
 
   const jumlahProduk = keranjang.reduce(
-    (sum, item) => sum + Number(item.jumlah),
+    (sum, item) =>
+      sum + Number(item.jumlah),
     0
   );
 
+  /* =========================
+     BUKA CHECKOUT
+  ========================= */
   const bukaCheckout = () => {
-    const token = localStorage.getItem("toko_token");
+    const token =
+      localStorage.getItem("toko_token");
 
     if (!token) {
       alert("Silakan login terlebih dahulu.");
 
       navigate("/login", {
         state: {
-          from: isUserArea ? "/user/cart" : "/cart",
+          from: isUserArea
+            ? "/user/cart"
+            : "/cart",
         },
       });
 
@@ -114,14 +164,26 @@ function Cart() {
     }
   };
 
+  /* =========================
+     VALIDASI
+  ========================= */
   const validasiForm = () => {
-    const nama = form.nama_pembeli.trim();
-    const phone = form.phone_pembeli.trim();
-    const alamat = form.alamat_pembeli.trim();
+    const nama =
+      form.nama_pembeli.trim();
 
-    if (!nama) return "Nama lengkap wajib diisi.";
+    const phone =
+      form.phone_pembeli.trim();
 
-    if (!phone) return "Nomor telepon wajib diisi.";
+    const alamat =
+      form.alamat_pembeli.trim();
+
+    if (!nama) {
+      return "Nama lengkap wajib diisi.";
+    }
+
+    if (!phone) {
+      return "Nomor telepon wajib diisi.";
+    }
 
     if (!/^[0-9]+$/.test(phone)) {
       return "Nomor telepon hanya boleh berisi angka.";
@@ -131,7 +193,9 @@ function Cart() {
       return "Nomor telepon minimal 10 digit.";
     }
 
-    if (!alamat) return "Alamat wajib diisi.";
+    if (!alamat) {
+      return "Alamat wajib diisi.";
+    }
 
     if (!form.metode_pembayaran) {
       return "Metode pembayaran wajib dipilih.";
@@ -148,11 +212,15 @@ function Cart() {
     return "";
   };
 
+  /* =========================
+     SUBMIT PESANAN
+  ========================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
 
-    const errorValidasi = validasiForm();
+    const errorValidasi =
+      validasiForm();
 
     if (errorValidasi) {
       setMessage(errorValidasi);
@@ -163,50 +231,66 @@ function Cart() {
 
     try {
       for (const item of keranjang) {
-        const response = await pembeliApi.createPembelian({
-          id_produk: item.id_produk,
-          jumlah: item.jumlah,
-          nama_pembeli: form.nama_pembeli.trim(),
-          phone_pembeli: form.phone_pembeli.trim(),
-          alamat_pembeli: form.alamat_pembeli.trim(),
-          metode_pembayaran: form.metode_pembayaran,
-          pengiriman: form.pengiriman,
-          catatan: form.catatan.trim(),
-        });
+        const response =
+          await pembeliApi.createPembelian({
+            id_produk: item.id_produk,
+            jumlah: item.jumlah,
+            nama_pembeli:
+              form.nama_pembeli.trim(),
+            phone_pembeli:
+              form.phone_pembeli.trim(),
+            alamat_pembeli:
+              form.alamat_pembeli.trim(),
+            metode_pembayaran:
+              form.metode_pembayaran,
+            pengiriman:
+              form.pengiriman,
+            catatan:
+              form.catatan.trim(),
+          });
 
         if (!response.success) {
           throw new Error(
-            response.message || "Gagal membuat pesanan."
+            response.message ||
+              "Gagal membuat pesanan."
           );
         }
       }
 
       alert("Pesanan berhasil dibuat!");
 
-      localStorage.removeItem("keranjang");
-      setKeranjang([]);
-      setShowCheckout(false);
-
-      setForm({
-        nama_pembeli: "",
-        phone_pembeli: "",
-        alamat_pembeli: "",
-        metode_pembayaran: METODE_BAYAR[0],
-        pengiriman: SHIPPING[0],
-        catatan: "",
-      });
-
-      /* KEMBALI KE PESANAN PEMBELI */
-      navigate(
-        isUserArea ? "/user/pesanan" : "/pesanan"
+      localStorage.removeItem(
+        "keranjang"
       );
 
+      setKeranjang([]);
+
+      setShowCheckout(false);
+
+      setForm((prev) => ({
+        ...prev,
+        phone_pembeli: "",
+        alamat_pembeli: "",
+        metode_pembayaran:
+          METODE_BAYAR[0],
+        pengiriman: SHIPPING[0],
+        catatan: "",
+      }));
+
+      navigate(
+        isUserArea
+          ? "/user/pesanan"
+          : "/pesanan"
+      );
     } catch (error) {
-      console.error("Gagal membuat pesanan:", error);
+      console.error(
+        "Gagal membuat pesanan:",
+        error
+      );
 
       setMessage(
         error.message ||
-        "Gagal membuat pesanan. Pastikan sudah login dan backend berjalan."
+          "Gagal membuat pesanan. Pastikan sudah login dan backend berjalan."
       );
     } finally {
       setLoading(false);
@@ -253,7 +337,11 @@ function Cart() {
               </p>
 
               <Link
-                to={isUserArea ? "/user/toko" : "/toko"}
+                to={
+                  isUserArea
+                    ? "/user/toko"
+                    : "/toko"
+                }
                 className="btn btn-warning px-4"
               >
                 Belanja Sekarang
@@ -278,17 +366,25 @@ function Cart() {
 
                         {/* PRODUK */}
                         <div className="col-md-5">
+
                           <div className="d-flex align-items-center gap-3">
 
                             <img
-                              src={mediaUrl(item.gambar)}
-                              onError={onImgError}
-                              alt={item.nama_produk}
+                              src={mediaUrl(
+                                item.gambar
+                              )}
+                              onError={
+                                onImgError
+                              }
+                              alt={
+                                item.nama_produk
+                              }
                               className="rounded"
                               style={{
                                 width: "85px",
                                 height: "85px",
-                                objectFit: "cover",
+                                objectFit:
+                                  "cover",
                               }}
                             />
 
@@ -299,19 +395,24 @@ function Cart() {
                               </p>
 
                               <h5 className="fw-bold mb-1">
-                                {item.nama_produk}
+                                {
+                                  item.nama_produk
+                                }
                               </h5>
 
                               <p className="text-muted mb-0">
                                 Rp{" "}
                                 {Number(
                                   item.harga
-                                ).toLocaleString("id-ID")}
+                                ).toLocaleString(
+                                  "id-ID"
+                                )}
                               </p>
 
                             </div>
 
                           </div>
+
                         </div>
 
                         {/* JUMLAH */}
@@ -327,7 +428,9 @@ function Cart() {
                               type="button"
                               className="btn btn-outline-dark btn-sm"
                               onClick={() =>
-                                kurangiJumlah(item.id_produk)
+                                kurangiJumlah(
+                                  item.id_produk
+                                )
                               }
                             >
                               −
@@ -335,7 +438,10 @@ function Cart() {
 
                             <span
                               className="px-3 fw-bold"
-                              style={{ minWidth: "40px" }}
+                              style={{
+                                minWidth:
+                                  "40px",
+                              }}
                             >
                               {item.jumlah}
                             </span>
@@ -344,7 +450,9 @@ function Cart() {
                               type="button"
                               className="btn btn-outline-dark btn-sm"
                               onClick={() =>
-                                tambahJumlah(item.id_produk)
+                                tambahJumlah(
+                                  item.id_produk
+                                )
                               }
                             >
                               +
@@ -364,9 +472,15 @@ function Cart() {
                           <strong>
                             Rp{" "}
                             {(
-                              Number(item.harga) *
-                              Number(item.jumlah)
-                            ).toLocaleString("id-ID")}
+                              Number(
+                                item.harga
+                              ) *
+                              Number(
+                                item.jumlah
+                              )
+                            ).toLocaleString(
+                              "id-ID"
+                            )}
                           </strong>
 
                         </div>
@@ -378,7 +492,9 @@ function Cart() {
                             type="button"
                             className="btn btn-outline-danger btn-sm"
                             onClick={() =>
-                              hapusProduk(item.id_produk)
+                              hapusProduk(
+                                item.id_produk
+                              )
                             }
                           >
                             Hapus
@@ -393,14 +509,17 @@ function Cart() {
                 ))}
 
                 <Link
-                  to={isUserArea ? "/user/toko" : "/toko"}
+                  to={
+                    isUserArea
+                      ? "/user/toko"
+                      : "/toko"
+                  }
                   className="btn btn-outline-dark"
                 >
                   ← Lanjut Belanja
                 </Link>
 
               </div>
-
 
               {/* RINGKASAN */}
               <div className="col-lg-4">
@@ -435,7 +554,9 @@ function Cart() {
 
                       <strong className="text-warning">
                         Rp{" "}
-                        {total.toLocaleString("id-ID")}
+                        {total.toLocaleString(
+                          "id-ID"
+                        )}
                       </strong>
 
                     </div>
@@ -460,14 +581,14 @@ function Cart() {
         </div>
       </section>
 
-
       {/* MODAL CHECKOUT */}
       {showCheckout && (
         <div
           className="modal d-block"
           tabIndex="-1"
           style={{
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backgroundColor:
+              "rgba(0, 0, 0, 0.6)",
           }}
         >
 
@@ -479,6 +600,7 @@ function Cart() {
               <div className="modal-header">
 
                 <div>
+
                   <h4 className="modal-title fw-bold">
                     Checkout
                   </h4>
@@ -486,17 +608,19 @@ function Cart() {
                   <small className="text-muted">
                     Lengkapi data pesanan kamu
                   </small>
+
                 </div>
 
                 <button
                   type="button"
                   className="btn-close"
-                  onClick={tutupCheckout}
+                  onClick={
+                    tutupCheckout
+                  }
                   disabled={loading}
                 ></button>
 
               </div>
-
 
               {/* BODY */}
               <div className="modal-body">
@@ -516,9 +640,15 @@ function Cart() {
                       Data Pembeli
                     </h5>
 
-                    <form onSubmit={handleSubmit}>
+                    <form
+                      onSubmit={
+                        handleSubmit
+                      }
+                    >
 
+                      {/* NAMA OTOMATIS */}
                       <div className="mb-3">
+
                         <label className="form-label fw-bold">
                           Nama Lengkap
                         </label>
@@ -527,15 +657,26 @@ function Cart() {
                           type="text"
                           name="nama_pembeli"
                           className="form-control"
-                          value={form.nama_pembeli}
-                          onChange={handleChange}
-                          placeholder="Masukkan nama lengkap"
-                          disabled={loading}
+                          value={
+                            form.nama_pembeli
+                          }
+                          onChange={
+                            handleChange
+                          }
+                          placeholder="Nama lengkap"
+                          disabled={true}
                           required
                         />
+
+                        <small className="text-muted">
+                          Nama diambil otomatis dari akun yang sedang login.
+                        </small>
+
                       </div>
 
+                      {/* TELEPON */}
                       <div className="mb-3">
+
                         <label className="form-label fw-bold">
                           Nomor Telepon
                         </label>
@@ -544,17 +685,24 @@ function Cart() {
                           type="text"
                           name="phone_pembeli"
                           className="form-control"
-                          value={form.phone_pembeli}
-                          onChange={handleChange}
+                          value={
+                            form.phone_pembeli
+                          }
+                          onChange={
+                            handleChange
+                          }
                           placeholder="Masukkan nomor telepon"
                           inputMode="numeric"
                           maxLength="15"
                           disabled={loading}
                           required
                         />
+
                       </div>
 
+                      {/* ALAMAT */}
                       <div className="mb-3">
+
                         <label className="form-label fw-bold">
                           Alamat
                         </label>
@@ -563,15 +711,22 @@ function Cart() {
                           name="alamat_pembeli"
                           className="form-control"
                           rows="3"
-                          value={form.alamat_pembeli}
-                          onChange={handleChange}
+                          value={
+                            form.alamat_pembeli
+                          }
+                          onChange={
+                            handleChange
+                          }
                           placeholder="Masukkan alamat lengkap"
                           disabled={loading}
                           required
                         ></textarea>
+
                       </div>
 
+                      {/* METODE PEMBAYARAN */}
                       <div className="mb-3">
+
                         <label className="form-label fw-bold">
                           Metode Pembayaran
                         </label>
@@ -579,20 +734,34 @@ function Cart() {
                         <select
                           name="metode_pembayaran"
                           className="form-select"
-                          value={form.metode_pembayaran}
-                          onChange={handleChange}
+                          value={
+                            form.metode_pembayaran
+                          }
+                          onChange={
+                            handleChange
+                          }
                           disabled={loading}
                           required
                         >
-                          {METODE_BAYAR.map((item) => (
-                            <option key={item} value={item}>
-                              {item}
-                            </option>
-                          ))}
+
+                          {METODE_BAYAR.map(
+                            (item) => (
+                              <option
+                                key={item}
+                                value={item}
+                              >
+                                {item}
+                              </option>
+                            )
+                          )}
+
                         </select>
+
                       </div>
 
+                      {/* PENGIRIMAN */}
                       <div className="mb-3">
+
                         <label className="form-label fw-bold">
                           Pengiriman
                         </label>
@@ -600,20 +769,34 @@ function Cart() {
                         <select
                           name="pengiriman"
                           className="form-select"
-                          value={form.pengiriman}
-                          onChange={handleChange}
+                          value={
+                            form.pengiriman
+                          }
+                          onChange={
+                            handleChange
+                          }
                           disabled={loading}
                           required
                         >
-                          {SHIPPING.map((item) => (
-                            <option key={item} value={item}>
-                              {item}
-                            </option>
-                          ))}
+
+                          {SHIPPING.map(
+                            (item) => (
+                              <option
+                                key={item}
+                                value={item}
+                              >
+                                {item}
+                              </option>
+                            )
+                          )}
+
                         </select>
+
                       </div>
 
+                      {/* CATATAN */}
                       <div className="mb-3">
+
                         <label className="form-label fw-bold">
                           Catatan
                         </label>
@@ -622,11 +805,16 @@ function Cart() {
                           name="catatan"
                           className="form-control"
                           rows="2"
-                          value={form.catatan}
-                          onChange={handleChange}
+                          value={
+                            form.catatan
+                          }
+                          onChange={
+                            handleChange
+                          }
                           placeholder="Catatan tambahan, jika ada"
                           disabled={loading}
                         ></textarea>
+
                       </div>
 
                       <button
@@ -634,13 +822,14 @@ function Cart() {
                         className="btn btn-warning w-100 fw-bold"
                         disabled={loading}
                       >
-                        {loading ? "Memproses..." : "Bayar"}
+                        {loading
+                          ? "Memproses..."
+                          : "Bayar"}
                       </button>
 
                     </form>
 
                   </div>
-
 
                   {/* RINGKASAN PESANAN */}
                   <div className="col-md-5">
@@ -651,72 +840,75 @@ function Cart() {
                         Pesanan Kamu
                       </h5>
 
-                      {keranjang.map((item) => (
-                        <div
-                          key={item.id_produk}
-                          className="d-flex gap-2 mb-3"
-                        >
+                      {keranjang.map(
+                        (item) => (
+                          <div
+                            key={
+                              item.id_produk
+                            }
+                            className="d-flex gap-2 mb-3"
+                          >
 
-                          <img
-                            src={mediaUrl(item.gambar)}
-                            onError={onImgError}
-                            alt={item.nama_produk}
-                            className="rounded"
-                            style={{
-                              width: "55px",
-                              height: "55px",
-                              objectFit: "cover",
-                            }}
-                          />
+                            <img
+                              src={mediaUrl(
+                                item.gambar
+                              )}
+                              onError={
+                                onImgError
+                              }
+                              alt={
+                                item.nama_produk
+                              }
+                              className="rounded"
+                              style={{
+                                width: "55px",
+                                height: "55px",
+                                objectFit:
+                                  "cover",
+                              }}
+                            />
 
-                          <div className="flex-grow-1">
+                            <div className="flex-grow-1">
 
-                            <p className="fw-bold small mb-1">
-                              {item.nama_produk}
-                            </p>
+                              <p className="fw-bold small mb-1">
+                                {
+                                  item.nama_produk
+                                }
+                              </p>
 
-                            <small className="text-muted">
-                              {item.jumlah} × Rp{" "}
-                              {Number(
-                                item.harga
-                              ).toLocaleString("id-ID")}
-                            </small>
-
+                              <small className="text-muted">
+                                {item.jumlah} ×
+                                Rp{" "}
+                                {Number(
+                                  item.harga
+                                ).toLocaleString(
+                                  "id-ID"
+                                )}
+                              </small>
+                            </div>
                           </div>
-
-                        </div>
-                      ))}
-
+                        )
+                      )}
                       <hr />
-
                       <div className="d-flex justify-content-between">
-
                         <strong>
                           Total
                         </strong>
-
                         <strong className="text-warning">
                           Rp{" "}
-                          {total.toLocaleString("id-ID")}
+                          {total.toLocaleString(
+                            "id-ID"
+                          )}
                         </strong>
-
                       </div>
-
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
       )}
-
     </>
   );
 }
