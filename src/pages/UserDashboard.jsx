@@ -5,6 +5,15 @@ import { mediaUrl, onImgError, formatTanggal } from "../utils";
 
 function UserDashboard() {
   const [pesanan, setPesanan] = useState([]);
+  const [stats, setStats] = useState({
+    total_pembelian: 0,
+    total_tertunda: 0,
+    total_dikemas: 0,
+    total_dikirim: 0,
+    total_diterima: 0,
+    total_selesai: 0,
+  });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,35 +24,49 @@ function UserDashboard() {
       return;
     }
 
-    pembeliApi
-      .getPembelian()
-      .then((response) => {
-        if (response.success) {
-          setPesanan(response.data || []);
+    Promise.all([
+      pembeliApi.getDashboard(),
+      pembeliApi.getPembelian(),
+    ])
+      .then(([dashboardResponse, pesananResponse]) => {
+        console.log("DATA DASHBOARD:", dashboardResponse);
+        console.log("DATA PESANAN:", pesananResponse);
+
+        if (dashboardResponse.success) {
+          setStats(
+            dashboardResponse.data || {
+              total_pembelian: 0,
+              total_tertunda: 0,
+              total_dikemas: 0,
+              total_dikirim: 0,
+              total_diterima: 0,
+              total_selesai: 0,
+            }
+          );
+        }
+
+        if (pesananResponse.success) {
+          setPesanan(pesananResponse.data || []);
         }
       })
       .catch((error) => {
-        console.error("Gagal mengambil pesanan:", error);
+        console.error("Gagal mengambil data dashboard:", error);
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  const jumlahPesanan = pesanan.length;
+  const jumlahPesanan = Number(stats.total_pembelian || 0);
 
-  const jumlahDiproses = pesanan.filter(
-    (item) =>
-      item.status_proses === "Tertunda" ||
-      item.status_proses === "Dikemas" ||
-      item.status_proses === "Dikirim"
-  ).length;
+  const jumlahDiproses =
+    Number(stats.total_tertunda || 0) +
+    Number(stats.total_dikemas || 0) +
+    Number(stats.total_dikirim || 0);
 
-  const jumlahSelesai = pesanan.filter(
-    (item) =>
-      item.status_proses === "Selesai" ||
-      item.status_proses === "Diterima"
-  ).length;
+  const jumlahSelesai =
+    Number(stats.total_diterima || 0) +
+    Number(stats.total_selesai || 0);
 
   const pesananTerbaru = pesanan.slice(0, 5);
 
@@ -172,6 +195,7 @@ function UserDashboard() {
 
           <div>
             <h4>Pesanan Terbaru</h4>
+
             <p>
               Daftar pesanan terakhir kamu
             </p>
@@ -186,8 +210,13 @@ function UserDashboard() {
 
         {loading ? (
           <div className="user-empty">
+
             <i className="bi bi-hourglass-split"></i>
-            <p>Memuat pesanan...</p>
+
+            <p>
+              Memuat pesanan...
+            </p>
+
           </div>
         ) : pesananTerbaru.length === 0 ? (
           <div className="user-empty">
@@ -196,7 +225,9 @@ function UserDashboard() {
               <i className="bi bi-bag"></i>
             </div>
 
-            <h5>Belum Ada Pesanan</h5>
+            <h5>
+              Belum Ada Pesanan
+            </h5>
 
             <p>
               Kamu belum memiliki pesanan.
@@ -218,7 +249,7 @@ function UserDashboard() {
 
               <div
                 className="user-order-item"
-                key={item.id_pembelian}
+                key={item.id_pembelian || item.id}
               >
 
                 <div className="user-order-product">
@@ -251,7 +282,9 @@ function UserDashboard() {
 
                 <div className="user-order-date">
 
-                  <span>Tanggal</span>
+                  <span>
+                    Tanggal
+                  </span>
 
                   <strong>
                     {formatTanggal(
@@ -264,8 +297,8 @@ function UserDashboard() {
                 </div>
 
                 <div>
-                  <span className={getStatusClass(item.status_proses)}>
-                    {item.status_proses || "Tertunda"}
+                  <span className={getStatusClass(item.status)}>
+                    {item.status || "Tertunda"}
                   </span>
                 </div>
 
@@ -282,6 +315,7 @@ function UserDashboard() {
       <div className="row g-4 mt-1">
 
         <div className="col-md-6">
+
           <Link
             to="/user/toko"
             className="user-quick-card"
@@ -292,7 +326,10 @@ function UserDashboard() {
             </div>
 
             <div>
-              <h5>Jelajahi Koleksi Batik</h5>
+              <h5>
+                Jelajahi Koleksi Batik
+              </h5>
+
               <p>
                 Temukan berbagai batik pilihan dari Batik Singosaren.
               </p>
@@ -301,9 +338,11 @@ function UserDashboard() {
             <i className="bi bi-arrow-right user-quick-arrow"></i>
 
           </Link>
+
         </div>
 
         <div className="col-md-6">
+
           <Link
             to="/user/cart"
             className="user-quick-card"
@@ -314,7 +353,10 @@ function UserDashboard() {
             </div>
 
             <div>
-              <h5>Periksa Keranjang</h5>
+              <h5>
+                Periksa Keranjang
+              </h5>
+
               <p>
                 Lihat kembali produk yang sudah kamu pilih.
               </p>
@@ -323,6 +365,7 @@ function UserDashboard() {
             <i className="bi bi-arrow-right user-quick-arrow"></i>
 
           </Link>
+
         </div>
 
       </div>
@@ -332,4 +375,3 @@ function UserDashboard() {
 }
 
 export default UserDashboard;
-
