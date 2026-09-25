@@ -63,9 +63,9 @@ export default function AdminOverviewPage() {
       });
   }, [handleError]);
 
-  // ==============================
-  // GRAFIK PENJUALAN
-  // ==============================
+  // ========================================
+  // DATA GRAFIK PENJUALAN
+  // ========================================
 
   useEffect(() => {
     apiRequest("/api/admin/grafik-penjualan")
@@ -86,6 +86,107 @@ export default function AdminOverviewPage() {
       });
   }, []);
 
+  if (pesan) {
+    return (
+      <div className="alert alert-danger">
+        <i className="bi bi-exclamation-circle me-2"></i>
+        {pesan}
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border text-secondary mb-3"></div>
+
+        <p className="text-muted mb-0">
+          Memuat data dashboard...
+        </p>
+      </div>
+    );
+  }
+
+  const pesananAktif =
+    Number(stats.total_tertunda || 0) +
+    Number(stats.total_dikemas || 0) +
+    Number(stats.total_dikirim || 0);
+
+  const belumDibayar = recent.filter(
+    (r) => r.pembayaran === "Belum"
+  ).length;
+
+  const kartu = [
+    {
+      label: "Pembeli Terdaftar",
+      value: jumlahPembeli,
+      icon: "bi-people",
+      warna: "",
+    },
+    {
+      label: "Total Transaksi",
+      value: stats.total_pembelian || 0,
+      icon: "bi-receipt",
+      warna: "dark",
+    },
+    {
+      label: "Produk di Katalog",
+      value: jumlahProduk,
+      icon: "bi-box-seam",
+      warna: "",
+    },
+    {
+      label: "Produk Terjual",
+      value: stats.total_pembelian || 0,
+      icon: "bi-bag-check",
+      warna: "",
+    },
+    {
+      label: "Pesanan Aktif",
+      value: pesananAktif,
+      icon: "bi-clock-history",
+      warna: "red",
+    },
+    {
+      label: "Belum Dibayar",
+      value: belumDibayar,
+      icon: "bi-credit-card",
+      warna: "red",
+    },
+  ];
+
+  const statusPesanan = [
+    {
+      label: "Tertunda",
+      value: Number(stats.total_tertunda || 0),
+      icon: "bi-hourglass-split",
+    },
+    {
+      label: "Dikemas",
+      value: Number(stats.total_dikemas || 0),
+      icon: "bi-box-seam",
+    },
+    {
+      label: "Dikirim",
+      value: Number(stats.total_dikirim || 0),
+      icon: "bi-truck",
+    },
+    {
+      label: "Diterima",
+      value: Number(stats.total_diterima || 0),
+      icon: "bi-check2-circle",
+    },
+    {
+      label: "Selesai",
+      value: Number(stats.total_selesai || 0),
+      icon: "bi-check-circle",
+    },
+  ];
+
+  // ========================================
+  // FORMAT BULAN GRAFIK
+  // ========================================
+
   const formatBulan = (bulan) => {
     const [tahun, bulanKe] = String(bulan).split("-");
 
@@ -99,6 +200,7 @@ export default function AdminOverviewPage() {
     });
   };
 
+  // Ambil maksimal 6 bulan terakhir
   const dataGrafik = grafik.slice(-6);
 
   const maxGrafik = Math.max(
@@ -108,7 +210,10 @@ export default function AdminOverviewPage() {
     1
   );
 
-  // Ukuran SVG grafik
+  // ========================================
+  // DATA TITIK GRAFIK GARIS
+  // ========================================
+
   const chartWidth = 760;
   const chartHeight = 320;
 
@@ -127,7 +232,6 @@ export default function AdminOverviewPage() {
     paddingTop -
     paddingBottom;
 
-  // Membuat titik-titik grafik
   const points = dataGrafik.map(
     (item, index) => {
       const total = Number(
@@ -165,216 +269,122 @@ export default function AdminOverviewPage() {
     .join(" ");
 
   return (
-    <div className="container-fluid py-4">
+    <div>
 
-      {/* HEADER */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      {/* HEADER DASHBOARD */}
+      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <div>
-          <h3 className="fw-bold mb-1">
+          <h4 className="fw-bold mb-1">
             Dashboard
-          </h3>
+          </h4>
 
           <p className="text-muted mb-0">
             Ringkasan aktivitas toko Batik Singosaren
           </p>
         </div>
 
-        <div className="text-end">
-          <span className="text-muted small">
-            Admin
-          </span>
+        <div className="small text-muted">
+          <i className="bi bi-shop me-1"></i>
+          Admin Batik Singosaren
         </div>
       </div>
 
-      {pesan && (
-        <div className="alert alert-danger">
-          {pesan}
-        </div>
-      )}
-
-      {/* STATISTIK */}
+      {/* KARTU STATISTIK */}
       <div className="row g-3 mb-4">
+        {kartu.map((k) => (
+          <div
+            className="col-6 col-md-4 col-xl-2"
+            key={k.label}
+          >
+            <div
+              className={`adm-stat-card h-100 ${
+                k.warna
+                  ? `adm-stat-card--${k.warna}`
+                  : ""
+              }`}
+            >
+              <div className="d-flex justify-content-between align-items-start mb-3">
 
-        <div className="col-md-6 col-lg-4">
-          <div className="adm-stat-card">
-            <div className="adm-stat-label">
-              Pembeli Terdaftar
-            </div>
+                <p className="adm-stat-label mb-0">
+                  {k.label}
+                </p>
 
-            <div className="adm-stat-value">
-              {jumlahPembeli}
-            </div>
-          </div>
-        </div>
+                <div
+                  className="rounded-3 d-flex align-items-center justify-content-center"
+                  style={{
+                    width: "38px",
+                    height: "38px",
+                    background:
+                      "rgba(82, 100, 86, 0.10)",
+                  }}
+                >
+                  <i
+                    className={`bi ${k.icon}`}
+                    style={{
+                      fontSize: "18px",
+                    }}
+                  ></i>
+                </div>
 
-        <div className="col-md-6 col-lg-4">
-          <div className="adm-stat-card">
-            <div className="adm-stat-label">
-              Total Transaksi
-            </div>
+              </div>
 
-            <div className="adm-stat-value">
-              {stats?.total_transaksi || 0}
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-6 col-lg-4">
-          <div className="adm-stat-card">
-            <div className="adm-stat-label">
-              Produk di Katalog
-            </div>
-
-            <div className="adm-stat-value">
-              {jumlahProduk}
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-6 col-lg-4">
-          <div className="adm-stat-card">
-            <div className="adm-stat-label">
-              Produk Terjual
-            </div>
-
-            <div className="adm-stat-value">
-              {stats?.produk_terjual || 0}
+              <div className="adm-stat-value">
+                {k.value}
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="col-md-6 col-lg-4">
-          <div className="adm-stat-card">
-            <div className="adm-stat-label">
-              Pesanan Aktif
-            </div>
-
-            <div className="adm-stat-value">
-              {stats?.pesanan_aktif || 0}
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-6 col-lg-4">
-          <div className="adm-stat-card">
-            <div className="adm-stat-label">
-              Belum Dibayar
-            </div>
-
-            <div className="adm-stat-value">
-              {stats?.belum_dibayar || 0}
-            </div>
-          </div>
-        </div>
-
+        ))}
       </div>
 
       {/* PENDAPATAN */}
       <div className="adm-card mb-4">
-        <div>
-          <div className="adm-stat-label">
-            Total Pendapatan
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+          <div className="d-flex align-items-center gap-3">
+
+            <div
+              className="rounded-3 d-flex align-items-center justify-content-center"
+              style={{
+                width: "50px",
+                height: "50px",
+                background: "#e8f0ea",
+                color: "#526456",
+              }}
+            >
+              <i className="bi bi-cash-stack fs-4"></i>
+            </div>
+
+            <div>
+              <p className="text-muted mb-1">
+                Total Penjualan
+              </p>
+
+              <h5 className="fw-bold mb-0">
+                Pendapatan dari seluruh pesanan
+              </h5>
+            </div>
+
           </div>
 
           <div className="adm-pendapatan-value">
             {formatRupiah(
-              stats?.total_pendapatan || 0
+              stats.total_pendapatan || 0
             )}
           </div>
-        </div>
-      </div>
-
-      {/* STATUS PESANAN */}
-      <div className="adm-card mb-4">
-
-        <div className="mb-4">
-          <h6 className="fw-bold mb-1">
-            Status Pesanan
-          </h6>
-
-          <p className="text-muted small mb-0">
-            Ringkasan status pesanan pelanggan
-          </p>
-        </div>
-
-        <div className="row g-3">
-
-          <div className="col-6 col-md-3">
-            <div className="p-3 rounded bg-light">
-              <small className="text-muted">
-                Tertunda
-              </small>
-
-              <h5 className="fw-bold mt-2 mb-0">
-                {stats?.status?.tertunda || 0}
-              </h5>
-            </div>
-          </div>
-
-          <div className="col-6 col-md-3">
-            <div className="p-3 rounded bg-light">
-              <small className="text-muted">
-                Dikemas
-              </small>
-
-              <h5 className="fw-bold mt-2 mb-0">
-                {stats?.status?.dikemas || 0}
-              </h5>
-            </div>
-          </div>
-
-          <div className="col-6 col-md-3">
-            <div className="p-3 rounded bg-light">
-              <small className="text-muted">
-                Dikirim
-              </small>
-
-              <h5 className="fw-bold mt-2 mb-0">
-                {stats?.status?.dikirim || 0}
-              </h5>
-            </div>
-          </div>
-
-          <div className="col-6 col-md-3">
-            <div className="p-3 rounded bg-light">
-              <small className="text-muted">
-                Diterima
-              </small>
-
-              <h5 className="fw-bold mt-2 mb-0">
-                {stats?.status?.diterima || 0}
-              </h5>
-            </div>
-          </div>
-
-          <div className="col-6 col-md-3">
-            <div className="p-3 rounded bg-light">
-              <small className="text-muted">
-                Selesai
-              </small>
-
-              <h5 className="fw-bold mt-2 mb-0">
-                {stats?.status?.selesai || 0}
-              </h5>
-            </div>
-          </div>
 
         </div>
       </div>
 
-      {/* ======================================== */}
       {/* GRAFIK PENJUALAN */}
-      {/* ======================================== */}
-
       <div className="adm-card mb-4">
 
         <div className="mb-4">
           <h6 className="fw-bold mb-1">
-            Statistik Penjualan
+            Grafik Penjualan
           </h6>
 
           <p className="text-muted small mb-0">
-            Perkembangan penjualan berdasarkan bulan
+            Total penjualan berdasarkan bulan
           </p>
         </div>
 
@@ -383,7 +393,7 @@ export default function AdminOverviewPage() {
           <div className="text-center text-muted py-5">
 
             <i
-              className="bi bi-graph-up"
+              className="bi bi-bar-chart"
               style={{
                 fontSize: "40px",
                 color: "#9aa89d",
@@ -470,20 +480,6 @@ export default function AdminOverviewPage() {
                 />
               )}
 
-              {/* AREA BAWAH GARIS */}
-              {points.length > 1 && (
-                <polygon
-                  points={`
-                    ${linePoints}
-                    ${points[points.length - 1].x},
-                    ${paddingTop + plotHeight}
-                    ${points[0].x},
-                    ${paddingTop + plotHeight}
-                  `}
-                  fill="rgba(107, 66, 38, 0.08)"
-                />
-              )}
-
               {/* TITIK GRAFIK */}
               {points.map(
                 (point, index) => (
@@ -508,7 +504,7 @@ export default function AdminOverviewPage() {
                       </title>
                     </circle>
 
-                    {/* NILAI DI ATAS TITIK */}
+                    {/* NILAI PENJUALAN */}
                     <text
                       x={point.x}
                       y={point.y - 12}
@@ -522,7 +518,7 @@ export default function AdminOverviewPage() {
                       )}
                     </text>
 
-                    {/* LABEL BULAN */}
+                    {/* NAMA BULAN */}
                     <text
                       x={point.x}
                       y={
@@ -551,10 +547,74 @@ export default function AdminOverviewPage() {
 
       </div>
 
-      {/* TRANSAKSI TERBARU */}
+      {/* STATUS PESANAN */}
       <div className="adm-card mb-4">
 
         <div className="d-flex justify-content-between align-items-center mb-4">
+
+          <div>
+            <h6 className="fw-bold mb-1">
+              Status Pesanan
+            </h6>
+
+            <p className="text-muted small mb-0">
+              Ringkasan kondisi pesanan saat ini
+            </p>
+          </div>
+
+          <Link
+            to="/admin/pembelian"
+            className="adm-btn-outline"
+          >
+            Kelola
+          </Link>
+
+        </div>
+
+        <div className="row g-3">
+
+          {statusPesanan.map((item) => (
+            <div
+              className="col-6 col-md"
+              key={item.label}
+            >
+              <div
+                className="border rounded-3 p-3 h-100"
+                style={{
+                  background: "#fafcfb",
+                }}
+              >
+
+                <div className="d-flex justify-content-between align-items-center mb-2">
+
+                  <span className="text-muted small">
+                    {item.label}
+                  </span>
+
+                  <i
+                    className={`bi ${item.icon}`}
+                    style={{
+                      color: "#657a68",
+                    }}
+                  ></i>
+
+                </div>
+
+                <div className="fs-4 fw-bold">
+                  {item.value}
+                </div>
+
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </div>
+
+      {/* TRANSAKSI TERBARU */}
+      <div className="adm-card mb-4">
+
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
 
           <div>
             <h6 className="fw-bold mb-1">
@@ -562,145 +622,159 @@ export default function AdminOverviewPage() {
             </h6>
 
             <p className="text-muted small mb-0">
-              Daftar transaksi terbaru
+              Pesanan yang baru masuk ke toko
             </p>
           </div>
 
           <Link
-            to="/admin/pesanan"
+            to="/admin/pembelian"
             className="adm-btn-outline"
           >
-            Lihat Semua
+            Lihat semua
+            <i className="bi bi-arrow-right ms-2"></i>
           </Link>
 
         </div>
 
-        <div className="table-responsive">
+        {recent.length === 0 ? (
 
-          <table className="table adm-table align-middle">
+          <div className="text-center py-5">
 
-            <thead>
-              <tr>
-                <th>Pembeli</th>
-                <th>Produk</th>
-                <th>Tanggal</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+            <i
+              className="bi bi-receipt"
+              style={{
+                fontSize: "40px",
+                color: "#9aa89d",
+              }}
+            ></i>
 
-            <tbody>
+            <p className="text-muted mt-3 mb-0">
+              Belum ada pesanan.
+            </p>
 
-              {recent.length === 0 ? (
+          </div>
 
+        ) : (
+
+          <div className="table-responsive">
+
+            <table className="table adm-table mb-0">
+
+              <thead>
                 <tr>
-                  <td
-                    colSpan="4"
-                    className="text-center text-muted py-4"
-                  >
-                    Belum ada transaksi.
-                  </td>
+                  <th>Pembeli</th>
+                  <th>Produk</th>
+                  <th>Tanggal</th>
+                  <th>Status</th>
                 </tr>
+              </thead>
 
-              ) : (
+              <tbody>
 
-                recent.map(
-                  (item, index) => (
-                    <tr key={item.id_pembelian || index}>
+                {recent.map((item) => (
 
-                      <td>
-                        {item.nama_pembeli ||
-                          item.nama ||
-                          "-"}
-                      </td>
+                  <tr key={item.id}>
 
-                      <td>
-                        {item.nama_produk ||
-                          "-"}
-                      </td>
+                    <td>
+                      <div className="d-flex align-items-center gap-2">
 
-                      <td>
-                        {item.created_at
-                          ? formatTanggal(
-                              item.created_at
-                            )
-                          : "-"}
-                      </td>
+                        <div
+                          className="rounded-circle d-flex align-items-center justify-content-center"
+                          style={{
+                            width: "34px",
+                            height: "34px",
+                            background: "#e8f0ea",
+                            color: "#526456",
+                          }}
+                        >
+                          <i className="bi bi-person"></i>
+                        </div>
 
-                      <td>
-                        <span className="adm-badge">
-                          {item.status ||
-                            "Tertunda"}
-                        </span>
-                      </td>
+                        <div>
+                          <div className="fw-semibold">
+                            {item.nama_d}{" "}
+                            {item.nama_b}
+                          </div>
 
-                    </tr>
-                  )
-                )
+                          <small className="text-muted">
+                            Pesanan #{item.id}
+                          </small>
+                        </div>
 
-              )}
+                      </div>
+                    </td>
 
-            </tbody>
+                    <td>
+                      {item.nama_produk}
+                    </td>
 
-          </table>
+                    <td>
+                      {formatTanggal(
+                        item.created_at
+                      )}
+                    </td>
 
-        </div>
+                    <td>
+                      <span className="adm-badge">
+                        {item.status ||
+                          "Tertunda"}
+                      </span>
+                    </td>
+
+                  </tr>
+
+                ))}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        )}
 
       </div>
 
-      {/* QUICK ACTION */}
-      <div className="adm-card">
+      {/* AKSI CEPAT */}
+      <div>
 
-        <div className="mb-4">
-          <h6 className="fw-bold mb-1">
-            Aksi Cepat
-          </h6>
+        <h6 className="fw-bold mb-3">
+          Aksi Cepat
+        </h6>
 
-          <p className="text-muted small mb-0">
-            Kelola toko Batik Singosaren
-          </p>
-        </div>
+        <div className="d-flex gap-2 flex-wrap">
 
-        <div className="row g-3">
+          <Link
+            to="/admin/produk"
+            className="adm-action-btn adm-action-btn--dark"
+          >
+            <i className="bi bi-plus-lg me-2"></i>
+            Tambah Produk
+          </Link>
 
-          <div className="col-md-6 col-lg-3">
-            <Link
-              to="/admin/produk"
-              className="adm-action-btn"
-            >
-              <i className="bi bi-plus-circle"></i>
-              <span>Tambah Produk</span>
-            </Link>
-          </div>
+          <Link
+            to="/admin/pembelian"
+            className="adm-action-btn adm-action-btn--outline"
+          >
+            <i className="bi bi-bag-check me-2"></i>
+            Kelola Pesanan
+          </Link>
 
-          <div className="col-md-6 col-lg-3">
-            <Link
-              to="/admin/pesanan"
-              className="adm-action-btn"
-            >
-              <i className="bi bi-box-seam"></i>
-              <span>Kelola Pesanan</span>
-            </Link>
-          </div>
+          <Link
+            to="/admin/pembeli"
+            className="adm-action-btn adm-action-btn--outline"
+          >
+            <i className="bi bi-people me-2"></i>
+            Data Pembeli
+          </Link>
 
-          <div className="col-md-6 col-lg-3">
-            <Link
-              to="/admin/pembeli"
-              className="adm-action-btn"
-            >
-              <i className="bi bi-people"></i>
-              <span>Data Pembeli</span>
-            </Link>
-          </div>
-
-          <div className="col-md-6 col-lg-3">
-            <Link
-              to="/"
-              className="adm-action-btn"
-            >
-              <i className="bi bi-shop"></i>
-              <span>Lihat Toko</span>
-            </Link>
-          </div>
+          <Link
+            to="/"
+            className="adm-action-btn adm-action-btn--outline"
+          >
+            <i className="bi bi-shop me-2"></i>
+            Lihat Toko
+          </Link>
 
         </div>
 
