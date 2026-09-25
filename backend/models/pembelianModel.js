@@ -264,6 +264,26 @@ const getLaporanPenjualan = () => {
   });
 };
 
+// Grafik Penjualan Bulanan
+const getPenjualanBulanan = () => {
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT
+        DATE_FORMAT(p.created_at, '%Y-%m') AS bulan,
+        COALESCE(SUM(pr.harga * p.jumlah), 0) AS total
+      FROM pembelian p
+      JOIN produk pr ON p.id_produk = pr.id_produk
+      GROUP BY DATE_FORMAT(p.created_at, '%Y-%m')
+      ORDER BY bulan ASC
+    `;
+
+    db.query(sql, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+};
+
 module.exports = {
   findAllPembelianWithDetail,
   findPembelianById,
@@ -276,4 +296,5 @@ module.exports = {
   getAdminStats,
   getRecentPembelian,
   getLaporanPenjualan,
+  getPenjualanBulanan,
 };
