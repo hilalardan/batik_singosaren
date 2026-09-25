@@ -1,4 +1,3 @@
-// backend/routes/admin.js
 const express = require("express");
 const router = express.Router();
 
@@ -26,6 +25,12 @@ router.put("/me", adminController.updateMyProfile);
 // ========================================
 
 router.get("/stats", adminController.getStats);
+
+// Grafik penjualan
+router.get(
+  "/grafik-penjualan",
+  adminController.getGrafikPenjualan
+);
 
 // ========================================
 // LAPORAN PENJUALAN
