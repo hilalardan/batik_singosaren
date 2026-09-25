@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { adminApi } from "../../api";
 import { formatRupiah } from "../../utils";
@@ -7,6 +6,7 @@ export default function AdminPesanan() {
   const [pesanan, setPesanan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [selectedPesanan, setSelectedPesanan] = useState(null);
   const [statusBaru, setStatusBaru] = useState("");
   const [saving, setSaving] = useState(false);
@@ -15,133 +15,104 @@ export default function AdminPesanan() {
     loadPesanan();
   }, []);
 
-  const loadPesanan = async () => {
+  async function loadPesanan() {
     try {
       setLoading(true);
       setError("");
 
       const response = await adminApi.getPembelian();
 
-      const data = Array.isArray(response?.data)
-        ? response.data
-        : [];
-
-      setPesanan(data);
+      if (response?.success) {
+        setPesanan(Array.isArray(response.data) ? response.data : []);
+      } else {
+        setPesanan([]);
+        setError(response?.message || "Gagal mengambil data pesanan.");
+      }
     } catch (err) {
       console.error(err);
-      setError(err.message || "Gagal mengambil data pesanan");
+      setError(err.message || "Gagal mengambil data pesanan.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const getTanggal = (item) => {
-    const tanggal =
-      item.created_at ||
-      item.tanggal_pembelian ||
-      item.tanggal ||
-      item.createdAt;
+  function getTanggal(item) {
+    if (!item?.created_at) return "-";
 
-    if (!tanggal) return "-";
+    return new Date(item.created_at).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }
 
-    const tanggalString = String(tanggal);
+  function getId(item) {
+    return item?.id_pembelian || item?.id || "-";
+  }
 
-    const bagianTanggal =
-      tanggalString.split("T")[0];
+  function getNama(item) {
+    return item?.nama_pembeli || item?.nama || "-";
+  }
 
-    const bagian =
-      bagianTanggal.split("-");
+  function getProduk(item) {
+    return item?.nama_produk || item?.produk?.nama_produk || "-";
+  }
 
-    if (bagian.length === 3) {
-      return `${bagian[2]}/${bagian[1]}/${bagian[0]}`;
-    }
+  function getHarga(item) {
+    return Number(item?.harga || item?.harga_produk || 0);
+  }
 
-    return tanggalString;
-  };
+  function getJumlah(item) {
+    return Number(item?.jumlah || 0);
+  }
 
-  const getId = (item) => {
-    return item.id || item.id_pembelian;
-  };
-
-  const getNama = (item) => {
-    return (
-      item.nama_pembeli ||
-      item.nama_d ||
-      item.nama_b ||
-      item.nama ||
-      "-"
-    );
-  };
-
-  const getProduk = (item) => {
-    return (
-      item.nama_produk ||
-      item.nama_product ||
-      item.produk ||
-      "-"
-    );
-  };
-
-  const getHarga = (item) => {
-    return Number(
-      item.harga ||
-      item.harga_produk ||
-      0
-    );
-  };
-
-  const getJumlah = (item) => {
-    return Number(item.jumlah || 0);
-  };
-
-  const getTotal = (item) => {
-    if (item.total !== undefined && item.total !== null) {
+  function getTotal(item) {
+    if (item?.total !== undefined && item?.total !== null) {
       return Number(item.total);
     }
 
     return getHarga(item) * getJumlah(item);
-  };
+  }
 
-  const getStatus = (item) => {
-    return item.status || "Tertunda";
-  };
+  function getStatus(item) {
+    return item?.status || "Tertunda";
+  }
 
-  const getStatusClass = (status) => {
-    switch (String(status).toLowerCase()) {
-      case "selesai":
+  function getStatusClass(status) {
+    switch (status) {
+      case "Selesai":
         return "bg-success";
 
-      case "diterima":
+      case "Diterima":
         return "bg-primary";
 
-      case "dikirim":
+      case "Dikirim":
         return "bg-info text-dark";
 
-      case "dikemas":
+      case "Dikemas":
         return "bg-warning text-dark";
 
-      case "dibatalkan":
+      case "Dibatalkan":
         return "bg-danger";
 
-      case "tertunda":
       default:
         return "bg-secondary";
     }
-  };
+  }
 
-  const bukaDetail = (item) => {
+  function bukaDetail(item) {
     setSelectedPesanan(item);
     setStatusBaru(getStatus(item));
-  };
+  }
 
-  const tutupDetail = () => {
+  function tutupDetail() {
     if (saving) return;
 
     setSelectedPesanan(null);
     setStatusBaru("");
-  };
+  }
 
-  const handleUpdateStatus = async () => {
+  async function handleUpdateStatus() {
     if (!selectedPesanan) return;
 
     try {
@@ -153,30 +124,25 @@ export default function AdminPesanan() {
         status: statusBaru,
       });
 
-      await loadPesanan();
+      alert("Status pesanan berhasil diperbarui.");
 
       setSelectedPesanan(null);
       setStatusBaru("");
+
+      await loadPesanan();
     } catch (err) {
       console.error(err);
-      alert(
-        err.message || "Gagal mengubah status pesanan"
-      );
+      alert(err.message || "Gagal memperbarui status pesanan.");
     } finally {
       setSaving(false);
     }
-  };
+  }
 
-  const handleDelete = async (item) => {
+  async function handleDelete(item) {
     const id = getId(item);
 
-    if (!id) {
-      alert("ID pesanan tidak ditemukan");
-      return;
-    }
-
     const yakin = window.confirm(
-      "Yakin ingin menghapus pesanan ini?"
+      `Yakin ingin menghapus pesanan #${id}?`
     );
 
     if (!yakin) return;
@@ -184,29 +150,285 @@ export default function AdminPesanan() {
     try {
       await adminApi.deletePembelian(id);
 
-      if (
-        selectedPesanan &&
-        getId(selectedPesanan) === id
-      ) {
-        setSelectedPesanan(null);
-      }
+      alert("Pesanan berhasil dihapus.");
 
       await loadPesanan();
+
+      if (selectedPesanan && getId(selectedPesanan) === id) {
+        setSelectedPesanan(null);
+      }
     } catch (err) {
       console.error(err);
-      alert(
-        err.message || "Gagal menghapus pesanan"
-      );
+      alert(err.message || "Gagal menghapus pesanan.");
     }
-  };
+  }
+
+  function cetakStruk() {
+    if (!selectedPesanan) return;
+
+    const item = selectedPesanan;
+
+    const id = getId(item);
+    const tanggal = getTanggal(item);
+    const nama = getNama(item);
+    const produk = getProduk(item);
+    const harga = getHarga(item);
+    const jumlah = getJumlah(item);
+    const total = getTotal(item);
+    const status = getStatus(item);
+
+    const phone = item?.phone_pembeli || item?.phone || "-";
+    const alamat = item?.alamat_pembeli || item?.alamat || "-";
+    const metodePembayaran =
+      item?.metode_pembayaran || item?.pembayaran || "-";
+    const pengiriman = item?.pengiriman || "-";
+    const catatan = item?.catatan || "-";
+
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+      alert("Popup diblokir browser. Silakan izinkan popup untuk mencetak struk.");
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8">
+        <title>Struk Pesanan #${id}</title>
+
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+
+          body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 30px;
+            color: #222;
+            background: #fff;
+          }
+
+          .struk {
+            width: 100%;
+            max-width: 700px;
+            margin: auto;
+          }
+
+          .header {
+            text-align: center;
+            border-bottom: 2px solid #222;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+          }
+
+          .header h1 {
+            margin: 0 0 5px;
+            font-size: 26px;
+          }
+
+          .header p {
+            margin: 3px 0;
+            font-size: 13px;
+          }
+
+          .judul {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+          }
+
+          .info {
+            margin-bottom: 20px;
+          }
+
+          .info-row {
+            display: flex;
+            margin-bottom: 7px;
+          }
+
+          .label {
+            width: 150px;
+            font-weight: bold;
+          }
+
+          .value {
+            flex: 1;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 20px;
+          }
+
+          th,
+          td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 13px;
+          }
+
+          th {
+            background: #f2f2f2;
+            text-align: left;
+          }
+
+          .text-right {
+            text-align: right;
+          }
+
+          .total {
+            font-size: 17px;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 10px;
+          }
+
+          .footer {
+            border-top: 1px solid #ccc;
+            margin-top: 30px;
+            padding-top: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+          }
+
+          @media print {
+            body {
+              padding: 0;
+            }
+
+            .struk {
+              max-width: none;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="struk">
+
+          <div class="header">
+            <h1>Batik Singosaren</h1>
+            <p>Jl. Niken Gandini, Ponorogo, Jawa Timur</p>
+            <p>info@batiksingosaren.com</p>
+          </div>
+
+          <div class="judul">
+            STRUK PESANAN
+          </div>
+
+          <div class="info">
+            <div class="info-row">
+              <div class="label">No. Pesanan</div>
+              <div class="value">#${id}</div>
+            </div>
+
+            <div class="info-row">
+              <div class="label">Tanggal</div>
+              <div class="value">${tanggal}</div>
+            </div>
+
+            <div class="info-row">
+              <div class="label">Nama Pembeli</div>
+              <div class="value">${nama}</div>
+            </div>
+
+            <div class="info-row">
+              <div class="label">No. Telepon</div>
+              <div class="value">${phone}</div>
+            </div>
+
+            <div class="info-row">
+              <div class="label">Alamat</div>
+              <div class="value">${alamat}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Produk</th>
+                <th>Harga</th>
+                <th>Jumlah</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>${produk}</td>
+                <td>${formatRupiah(harga)}</td>
+                <td>${jumlah}</td>
+                <td>${formatRupiah(total)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="info">
+            <div class="info-row">
+              <div class="label">Pembayaran</div>
+              <div class="value">${metodePembayaran}</div>
+            </div>
+
+            <div class="info-row">
+              <div class="label">Pengiriman</div>
+              <div class="value">${pengiriman}</div>
+            </div>
+
+            <div class="info-row">
+              <div class="label">Status</div>
+              <div class="value">${status}</div>
+            </div>
+
+            <div class="info-row">
+              <div class="label">Catatan</div>
+              <div class="value">${catatan}</div>
+            </div>
+          </div>
+
+          <div class="total">
+            Total Pembayaran: ${formatRupiah(total)}
+          </div>
+
+          <div class="footer">
+            <p>Terima kasih telah berbelanja di Batik Singosaren.</p>
+            <p>Struk ini dicetak dari sistem admin Batik Singosaren.</p>
+          </div>
+
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+
+          window.onafterprint = function() {
+            window.close();
+          };
+        </script>
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  }
 
   return (
     <div className="container-fluid py-4">
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h2 className="fw-bold mb-1">
+          <h3 className="fw-bold mb-1">
             Pesanan
-          </h2>
+          </h3>
 
           <p className="text-muted mb-0">
             Kelola pesanan pelanggan Batik Singosaren.
@@ -219,50 +441,50 @@ export default function AdminPesanan() {
           onClick={loadPesanan}
           disabled={loading}
         >
-          {loading ? "Memuat..." : "Refresh"}
+          <i className="bi bi-arrow-clockwise me-2"></i>
+          Refresh
         </button>
       </div>
 
       {error && (
-        <div
-          className="alert alert-danger"
-          role="alert"
-        >
+        <div className="alert alert-danger">
           {error}
         </div>
       )}
 
       <div className="card border-0 shadow-sm">
+
         <div className="card-body">
+
           {loading ? (
             <div className="text-center py-5">
               <div
-                className="spinner-border"
+                className="spinner-border text-primary"
                 role="status"
-              >
-                <span className="visually-hidden">
-                  Loading...
-                </span>
-              </div>
+              ></div>
 
-              <p className="mt-3 mb-0 text-muted">
+              <p className="mt-3 text-muted">
                 Memuat data pesanan...
               </p>
             </div>
           ) : pesanan.length === 0 ? (
             <div className="text-center py-5">
-              <h5 className="mb-2">
+              <i className="bi bi-cart-x fs-1 text-muted"></i>
+
+              <h5 className="mt-3">
                 Belum ada pesanan
               </h5>
 
-              <p className="text-muted mb-0">
-                Data pesanan akan muncul di sini.
+              <p className="text-muted">
+                Data pesanan pelanggan akan muncul di sini.
               </p>
             </div>
           ) : (
             <div className="table-responsive">
-              <table className="table table-hover align-middle mb-0">
-                <thead>
+
+              <table className="table table-hover align-middle">
+
+                <thead className="table-light">
                   <tr>
                     <th>No</th>
                     <th>Pembeli</th>
@@ -277,108 +499,105 @@ export default function AdminPesanan() {
                 </thead>
 
                 <tbody>
-                  {pesanan.map((item, index) => (
-                    <tr key={getId(item) || index}>
-                      <td>
-                        {index + 1}
-                      </td>
 
-                      <td>
-                        <div className="fw-semibold">
-                          {getNama(item)}
-                        </div>
+                  {pesanan.map((item, index) => {
+                    const status = getStatus(item);
 
-                        {item.email && (
-                          <small className="text-muted">
-                            {item.email}
-                          </small>
-                        )}
-                      </td>
+                    return (
+                      <tr key={getId(item)}>
 
-                      <td>
-                        {getTanggal(item)}
-                      </td>
+                        <td>
+                          {index + 1}
+                        </td>
 
-                      <td>
-                        {getProduk(item)}
-                      </td>
+                        <td>
+                          <strong>
+                            {getNama(item)}
+                          </strong>
+                        </td>
 
-                      <td>
-                        {formatRupiah(
-                          getHarga(item)
-                        )}
-                      </td>
+                        <td>
+                          {getTanggal(item)}
+                        </td>
 
-                      <td>
-                        {getJumlah(item)}
-                      </td>
+                        <td>
+                          {getProduk(item)}
+                        </td>
 
-                      <td className="fw-semibold">
-                        {formatRupiah(
-                          getTotal(item)
-                        )}
-                      </td>
+                        <td>
+                          {formatRupiah(getHarga(item))}
+                        </td>
 
-                      <td>
-                        <span
-                          className={`badge ${getStatusClass(
-                            getStatus(item)
-                          )}`}
-                        >
-                          {getStatus(item)}
-                        </span>
-                      </td>
+                        <td>
+                          {getJumlah(item)}
+                        </td>
 
-                      <td>
-                        <div className="d-flex gap-2">
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() =>
-                              bukaDetail(item)
-                            }
+                        <td>
+                          <strong>
+                            {formatRupiah(getTotal(item))}
+                          </strong>
+                        </td>
+
+                        <td>
+                          <span
+                            className={`badge ${getStatusClass(status)}`}
                           >
-                            Detail
-                          </button>
+                            {status}
+                          </span>
+                        </td>
 
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() =>
-                              handleDelete(item)
-                            }
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        <td>
+                          <div className="d-flex gap-2">
+
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-primary"
+                              onClick={() => bukaDetail(item)}
+                            >
+                              <i className="bi bi-eye me-1"></i>
+                              Detail
+                            </button>
+
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => handleDelete(item)}
+                            >
+                              <i className="bi bi-trash me-1"></i>
+                              Hapus
+                            </button>
+
+                          </div>
+                        </td>
+
+                      </tr>
+                    );
+                  })}
+
                 </tbody>
+
               </table>
+
             </div>
           )}
+
         </div>
       </div>
 
       {selectedPesanan && (
         <div
-          className="modal d-block"
+          className="modal fade show d-block"
           tabIndex="-1"
-          role="dialog"
-          style={{
-            backgroundColor:
-              "rgba(0, 0, 0, 0.5)",
-          }}
+          style={{ backgroundColor: "rgba(0,0,0,.5)" }}
         >
-          <div
-            className="modal-dialog modal-lg modal-dialog-centered"
-            role="document"
-          >
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+
             <div className="modal-content">
+
               <div className="modal-header">
-                <h5 className="modal-title">
-                  Detail Pesanan
+
+                <h5 className="modal-title fw-bold">
+                  Detail Pesanan #{getId(selectedPesanan)}
                 </h5>
 
                 <button
@@ -386,155 +605,113 @@ export default function AdminPesanan() {
                   className="btn-close"
                   onClick={tutupDetail}
                   disabled={saving}
-                />
+                ></button>
+
               </div>
 
               <div className="modal-body">
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <small className="text-muted">
-                      Pembeli
-                    </small>
 
-                    <div className="fw-semibold">
+                <div className="row g-3">
+
+                  <div className="col-md-6">
+
+                    <h6 className="fw-bold mb-3">
+                      Data Pembeli
+                    </h6>
+
+                    <div className="mb-2">
+                      <strong>Nama:</strong>{" "}
                       {getNama(selectedPesanan)}
                     </div>
-                  </div>
 
-                  <div className="col-md-6">
-                    <small className="text-muted">
-                      Tanggal
-                    </small>
-
-                    <div className="fw-semibold">
-                      {getTanggal(
-                        selectedPesanan
-                      )}
+                    <div className="mb-2">
+                      <strong>Telepon:</strong>{" "}
+                      {selectedPesanan.phone_pembeli ||
+                        selectedPesanan.phone ||
+                        "-"}
                     </div>
-                  </div>
 
-                  <div className="col-md-6">
-                    <small className="text-muted">
-                      Produk
-                    </small>
-
-                    <div className="fw-semibold">
-                      {getProduk(
-                        selectedPesanan
-                      )}
+                    <div className="mb-2">
+                      <strong>Alamat:</strong>{" "}
+                      {selectedPesanan.alamat_pembeli ||
+                        selectedPesanan.alamat ||
+                        "-"}
                     </div>
+
                   </div>
 
                   <div className="col-md-6">
-                    <small className="text-muted">
-                      Harga
-                    </small>
 
-                    <div className="fw-semibold">
+                    <h6 className="fw-bold mb-3">
+                      Informasi Pesanan
+                    </h6>
+
+                    <div className="mb-2">
+                      <strong>Tanggal:</strong>{" "}
+                      {getTanggal(selectedPesanan)}
+                    </div>
+
+                    <div className="mb-2">
+                      <strong>Produk:</strong>{" "}
+                      {getProduk(selectedPesanan)}
+                    </div>
+
+                    <div className="mb-2">
+                      <strong>Harga:</strong>{" "}
                       {formatRupiah(
-                        getHarga(
-                          selectedPesanan
-                        )
+                        getHarga(selectedPesanan)
                       )}
                     </div>
-                  </div>
 
-                  <div className="col-md-6">
-                    <small className="text-muted">
-                      Jumlah
-                    </small>
-
-                    <div className="fw-semibold">
-                      {getJumlah(
-                        selectedPesanan
-                      )}
+                    <div className="mb-2">
+                      <strong>Jumlah:</strong>{" "}
+                      {getJumlah(selectedPesanan)}
                     </div>
-                  </div>
 
-                  <div className="col-md-6">
-                    <small className="text-muted">
-                      Total
-                    </small>
-
-                    <div className="fw-semibold">
+                    <div className="mb-2">
+                      <strong>Total:</strong>{" "}
                       {formatRupiah(
-                        getTotal(
-                          selectedPesanan
-                        )
+                        getTotal(selectedPesanan)
                       )}
                     </div>
+
                   </div>
 
-                  {selectedPesanan.metode_pembayaran && (
-                    <div className="col-md-6">
-                      <small className="text-muted">
-                        Metode Pembayaran
-                      </small>
+                  <div className="col-md-6">
 
-                      <div className="fw-semibold">
-                        {
-                          selectedPesanan.metode_pembayaran
-                        }
-                      </div>
+                    <h6 className="fw-bold mb-3">
+                      Pembayaran & Pengiriman
+                    </h6>
+
+                    <div className="mb-2">
+                      <strong>Pembayaran:</strong>{" "}
+                      {selectedPesanan.metode_pembayaran ||
+                        selectedPesanan.pembayaran ||
+                        "-"}
                     </div>
-                  )}
 
-                  {selectedPesanan.pengiriman && (
-                    <div className="col-md-6">
-                      <small className="text-muted">
-                        Pengiriman
-                      </small>
-
-                      <div className="fw-semibold">
-                        {
-                          selectedPesanan.pengiriman
-                        }
-                      </div>
+                    <div className="mb-2">
+                      <strong>Pengiriman:</strong>{" "}
+                      {selectedPesanan.pengiriman || "-"}
                     </div>
-                  )}
 
-                  {selectedPesanan.alamat_pembeli && (
-                    <div className="col-12">
-                      <small className="text-muted">
-                        Alamat
-                      </small>
+                  </div>
 
-                      <div className="fw-semibold">
-                        {
-                          selectedPesanan.alamat_pembeli
-                        }
-                      </div>
+                  <div className="col-md-6">
+
+                    <h6 className="fw-bold mb-3">
+                      Catatan
+                    </h6>
+
+                    <div className="border rounded p-3 bg-light">
+                      {selectedPesanan.catatan || "-"}
                     </div>
-                  )}
 
-                  {selectedPesanan.phone_pembeli && (
-                    <div className="col-md-6">
-                      <small className="text-muted">
-                        No. Telepon
-                      </small>
-
-                      <div className="fw-semibold">
-                        {
-                          selectedPesanan.phone_pembeli
-                        }
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedPesanan.catatan && (
-                    <div className="col-12">
-                      <small className="text-muted">
-                        Catatan
-                      </small>
-
-                      <div className="fw-semibold">
-                        {selectedPesanan.catatan}
-                      </div>
-                    </div>
-                  )}
+                  </div>
 
                   <div className="col-12">
-                    <label className="form-label fw-semibold">
+
+                    <label className="form-label fw-bold">
                       Status Pesanan
                     </label>
 
@@ -542,9 +719,7 @@ export default function AdminPesanan() {
                       className="form-select"
                       value={statusBaru}
                       onChange={(e) =>
-                        setStatusBaru(
-                          e.target.value
-                        )
+                        setStatusBaru(e.target.value)
                       }
                       disabled={saving}
                     >
@@ -572,11 +747,15 @@ export default function AdminPesanan() {
                         Dibatalkan
                       </option>
                     </select>
+
                   </div>
+
                 </div>
+
               </div>
 
               <div className="modal-footer">
+
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -588,19 +767,37 @@ export default function AdminPesanan() {
 
                 <button
                   type="button"
+                  className="btn btn-outline-dark"
+                  onClick={cetakStruk}
+                  disabled={saving}
+                >
+                  <i className="bi bi-printer me-2"></i>
+                  Cetak Struk
+                </button>
+
+                <button
+                  type="button"
                   className="btn btn-primary"
                   onClick={handleUpdateStatus}
                   disabled={saving}
                 >
-                  {saving
-                    ? "Menyimpan..."
-                    : "Simpan Status"}
+                  {saving ? (
+                    "Menyimpan..."
+                  ) : (
+                    <>
+                      <i className="bi bi-save me-2"></i>
+                      Simpan Status
+                    </>
+                  )}
                 </button>
+
               </div>
+
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
