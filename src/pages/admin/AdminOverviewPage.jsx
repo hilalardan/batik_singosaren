@@ -1,7 +1,6 @@
-// frontend/src/pages/admin/AdminOverviewPage.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { adminApi } from "../../api";
+import { adminApi, apiRequest } from "../../api";
 import { useAdminGuard } from "../../hooks";
 import { formatRupiah, formatTanggal } from "../../utils";
 
@@ -10,6 +9,7 @@ export default function AdminOverviewPage() {
 
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
+  const [grafik, setGrafik] = useState([]);
   const [jumlahPembeli, setJumlahPembeli] = useState(0);
   const [jumlahProduk, setJumlahProduk] = useState(0);
   const [pesan, setPesan] = useState("");
@@ -21,21 +21,18 @@ export default function AdminOverviewPage() {
       adminApi.getProduk(),
     ])
       .then(([resStats, resPembeli, resProduk]) => {
-        // Cek response statistik terlebih dahulu
         if (!resStats?.success) {
           throw new Error(
             resStats?.message || "Gagal mengambil statistik"
           );
         }
 
-        // Cek response pembeli
         if (!resPembeli?.success) {
           throw new Error(
             resPembeli?.message || "Gagal mengambil data pembeli"
           );
         }
 
-        // Cek response produk
         if (!resProduk?.success) {
           throw new Error(
             resProduk?.message || "Gagal mengambil data produk"
@@ -44,11 +41,13 @@ export default function AdminOverviewPage() {
 
         setStats(resStats.data?.stats || {});
         setRecent(resStats.data?.recent || []);
+
         setJumlahPembeli(
           Array.isArray(resPembeli.data)
             ? resPembeli.data.length
             : 0
         );
+
         setJumlahProduk(
           Array.isArray(resProduk.data)
             ? resProduk.data.length
@@ -63,6 +62,29 @@ export default function AdminOverviewPage() {
         }
       });
   }, [handleError]);
+
+  // ========================================
+  // DATA GRAFIK PENJUALAN
+  // ========================================
+
+  useEffect(() => {
+    apiRequest("/api/admin/grafik-penjualan")
+      .then((res) => {
+        if (res?.success) {
+          setGrafik(
+            Array.isArray(res.data)
+              ? res.data
+              : []
+          );
+        }
+      })
+      .catch((err) => {
+        console.error(
+          "Gagal mengambil grafik:",
+          err
+        );
+      });
+  }, []);
 
   if (pesan) {
     return (
@@ -161,6 +183,33 @@ export default function AdminOverviewPage() {
     },
   ];
 
+  // ========================================
+  // FORMAT BULAN GRAFIK
+  // ========================================
+
+  const formatBulan = (bulan) => {
+    const [tahun, bulanKe] = String(bulan).split("-");
+
+    return new Date(
+      Number(tahun),
+      Number(bulanKe) - 1,
+      1
+    ).toLocaleDateString("id-ID", {
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  // Ambil maksimal 6 bulan terakhir
+  const dataGrafik = grafik.slice(-6);
+
+  const maxGrafik = Math.max(
+    ...dataGrafik.map(
+      (item) => Number(item.total || 0)
+    ),
+    1
+  );
+
   return (
     <div>
 
@@ -207,7 +256,8 @@ export default function AdminOverviewPage() {
                   style={{
                     width: "38px",
                     height: "38px",
-                    background: "rgba(82, 100, 86, 0.10)",
+                    background:
+                      "rgba(82, 100, 86, 0.10)",
                   }}
                 >
                   <i
@@ -259,10 +309,111 @@ export default function AdminOverviewPage() {
           </div>
 
           <div className="adm-pendapatan-value">
-            {formatRupiah(stats.total_pendapatan || 0)}
+            {formatRupiah(
+              stats.total_pendapatan || 0
+            )}
           </div>
 
         </div>
+      </div>
+
+      {/* GRAFIK PENJUALAN */}
+      <div className="adm-card mb-4">
+
+        <div className="mb-4">
+          <h6 className="fw-bold mb-1">
+            Grafik Penjualan
+          </h6>
+
+          <p className="text-muted small mb-0">
+            Total penjualan berdasarkan bulan
+          </p>
+        </div>
+
+        {dataGrafik.length === 0 ? (
+
+          <div className="text-center text-muted py-5">
+
+            <i
+              className="bi bi-bar-chart"
+              style={{
+                fontSize: "40px",
+                color: "#9aa89d",
+              }}
+            ></i>
+
+            <p className="mt-3 mb-0">
+              Belum ada data penjualan.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div
+            className="d-flex align-items-end gap-3 overflow-auto"
+            style={{
+              minHeight: "280px",
+            }}
+          >
+
+            {dataGrafik.map((item) => {
+
+              const total = Number(
+                item.total || 0
+              );
+
+              const tinggi =
+                total > 0
+                  ? Math.max(
+                      (total / maxGrafik) * 100,
+                      5
+                    )
+                  : 0;
+
+              return (
+                <div
+                  key={item.bulan}
+                  className="flex-fill d-flex flex-column align-items-center justify-content-end"
+                  style={{
+                    minWidth: "90px",
+                    height: "260px",
+                  }}
+                >
+
+                  <small className="fw-semibold mb-2 text-center">
+                    {formatRupiah(total)}
+                  </small>
+
+                  <div
+                    title={`${formatBulan(
+                      item.bulan
+                    )} - ${formatRupiah(total)}`}
+                    style={{
+                      width: "55px",
+                      height: `${tinggi}%`,
+                      background: "#6b4226",
+                      borderRadius:
+                        "8px 8px 0 0",
+                      minHeight:
+                        total > 0
+                          ? "8px"
+                          : "0",
+                    }}
+                  ></div>
+
+                  <small className="text-muted mt-2">
+                    {formatBulan(item.bulan)}
+                  </small>
+
+                </div>
+              );
+            })}
+
+          </div>
+
+        )}
+
       </div>
 
       {/* STATUS PESANAN */}
@@ -410,7 +561,8 @@ export default function AdminOverviewPage() {
 
                         <div>
                           <div className="fw-semibold">
-                            {item.nama_d} {item.nama_b}
+                            {item.nama_d}{" "}
+                            {item.nama_b}
                           </div>
 
                           <small className="text-muted">
@@ -426,12 +578,15 @@ export default function AdminOverviewPage() {
                     </td>
 
                     <td>
-                      {formatTanggal(item.created_at)}
+                      {formatTanggal(
+                        item.created_at
+                      )}
                     </td>
 
                     <td>
                       <span className="adm-badge">
-                        {item.status || "Tertunda"}
+                        {item.status ||
+                          "Tertunda"}
                       </span>
                     </td>
 
