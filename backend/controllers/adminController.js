@@ -681,6 +681,28 @@ const getStats = async (req, res) => {
 
 
 // ========================================
+// GRAFIK PENJUALAN
+// ========================================
+
+const getGrafikPenjualan = async (req, res) => {
+  try {
+    const data = await pembelianModel.getPenjualanBulanan();
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      message: "Gagal mengambil data grafik penjualan",
+      error: err.message
+    });
+  }
+};
+
+
+// ========================================
 // LAPORAN PENJUALAN
 // ========================================
 
@@ -1016,6 +1038,7 @@ module.exports = {
   deleteArtikel,
 
   getStats,
+  getGrafikPenjualan,
   getLaporanPenjualan,
 
   listPembelian,
